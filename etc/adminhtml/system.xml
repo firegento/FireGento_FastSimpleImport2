@@ -15,13 +15,22 @@
                 <label>Default Values</label>
                 <field id="behavior" translate="label" type="select" sortOrder="10" showInDefault="1" showInWebsite="0" showInStore="0">
                     <label>Behavior</label>
-                    <frontend_class>behavior</frontend_class>
                     <source_model>FireGento\FastSimpleImport2\Model\Config\Source\Behavior</source_model>
                 </field>
                 <field id="entity" translate="label" type="select" sortOrder="20" showInDefault="1" showInWebsite="0" showInStore="0">
                     <label>Entity Type</label>
-                    <frontend_class>entity</frontend_class>
                     <source_model>Magento\ImportExport\Model\Source\Import\Entity</source_model>
+                </field>
+                <field id="validation_strategy" translate="label" type="select" sortOrder="30" showInDefault="1" showInWebsite="0" showInStore="0">
+                    <label>Validation Strategy</label>
+                    <source_model>FireGento\FastSimpleImport2\Model\Config\Source\ValidationStrategy</source_model>
+                </field>
+                <field id="allowed_error_count" translate="label" type="text" sortOrder="40" showInDefault="1" showInWebsite="0" showInStore="0">
+                    <label>Allowed Error Count</label>
+                    <frontend_class>validate-number</frontend_class>
+                </field>
+                <field id="import_images_file_dir" translate="label" type="text" sortOrder="50" showInDefault="1" showInWebsite="0" showInStore="0">
+                    <label>Import Images Directory</label>
                 </field>
             </group>
         </section>

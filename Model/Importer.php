@@ -50,31 +50,15 @@ class Importer
         $this->arrayAdapterFactory = $arrayAdapterFactory;
         $this->configHelper = $configHelper;
 
-        $sourceData = array(
+        $sourceData = [
             'entity' => $this->configHelper->getEntity(),
             'behavior' => $this->configHelper->getBehavior(),
-            'validation_strategy' => 'validation-stop-on-errors',
-            'allowed_error_count' => 10,
-            'import_images_file_dir' => '',
-        );
+            'validation_strategy' => $this->configHelper->getValidationStrategy(),
+            'allowed_error_count' => $this->configHelper->getAllowedErrorCount(),
+            'import_images_file_dir' => $this->configHelper->getImportFileDir(),
+        ];
 
         $this->importModel->setData($sourceData);
-    }
-
-    /**
-     * @param string $entityCode
-     */
-    public function setEntityCode($entityCode)
-    {
-        $this->importModel->setData('entity', $entityCode);
-    }
-
-    /**
-     * @param string $behavior
-     */
-    public function setBehavior($behavior)
-    {
-        $this->importModel->setData('behavior', $behavior);
     }
 
     public function processImport($dataArray)
@@ -104,6 +88,46 @@ class Importer
         if (!$this->importModel->getErrorAggregator()->hasToBeTerminated()) {
             $this->importModel->invalidateIndex();
         }
+    }
+
+    /**
+     * @param string $entityCode
+     */
+    public function setEntityCode($entityCode)
+    {
+        $this->importModel->setData('entity', $entityCode);
+    }
+
+    /**
+     * @param string $behavior
+     */
+    public function setBehavior($behavior)
+    {
+        $this->importModel->setData('behavior', $behavior);
+    }
+
+    /**
+     * @param string $strategy
+     */
+    public function setValidationStrategy($strategy)
+    {
+        $this->importModel->setData('validation_strategy', $strategy);
+    }
+
+    /**
+     * @param int $count
+     */
+    public function setAllowedErrorCount($count)
+    {
+        $this->importModel->setData('allowed_error_count', $count);
+    }
+
+    /**
+     * @param string $dir
+     */
+    public function setImportImagesFileDir($dir)
+    {
+        $this->importModel->setData('import_images_file_dir', $dir);
     }
 
     public function getValidationResult()
