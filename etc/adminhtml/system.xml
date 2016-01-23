@@ -1,0 +1,29 @@
+<?xml version="1.0"?>
+<!--
+/**
+ * Copyright © 2016 FireGento e.V. - All rights reserved.
+ * See LICENSE.md bundled with this module for license details.
+ */
+-->
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:module:Magento_Config:etc/system_file.xsd">
+    <system>
+        <section id="fastsimpleimport2" translate="label" type="text" sortOrder="310" showInDefault="1" showInWebsite="0" showInStore="0">
+            <label>FastSimpleImport 2</label>
+            <tab>service</tab>
+            <resource>FireGento_FastSimpleImport2::config_fastsimpleimport2</resource>
+            <group id="default" translate="label" type="text" sortOrder="1" showInDefault="1" showInWebsite="0" showInStore="0">
+                <label>Default Values</label>
+                <field id="behavior" translate="label" type="select" sortOrder="10" showInDefault="1" showInWebsite="0" showInStore="0">
+                    <label>Behavior</label>
+                    <frontend_class>behavior</frontend_class>
+                    <source_model>FireGento\FastSimpleImport2\Model\Config\Source\Behavior</source_model>
+                </field>
+                <field id="entity" translate="label" type="select" sortOrder="20" showInDefault="1" showInWebsite="0" showInStore="0">
+                    <label>Entity Type</label>
+                    <frontend_class>entity</frontend_class>
+                    <source_model>Magento\ImportExport\Model\Source\Import\Entity</source_model>
+                </field>
+            </group>
+        </section>
+    </system>
+</config>
