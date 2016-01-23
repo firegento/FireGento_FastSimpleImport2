@@ -26,26 +26,33 @@ class Importer
      * @var
      */
     protected $validationResult;
+    /**
+     * @var \FireGento\FastSimpleImport2\Helper\Config
+     */
+    protected $configHelper;
 
     /**
      * Importer constructor.
      * @param \Magento\ImportExport\Model\Import $importModel
      * @param \FireGento\FastSimpleImport2\Helper\ImportError $errorHelper
      * @param ArrayAdapterFactory $arrayAdapterFactory
+     * @param \FireGento\FastSimpleImport2\Helper\Config $configHelper
      */
     public function __construct(
         \Magento\ImportExport\Model\Import $importModel,
         \FireGento\FastSimpleImport2\Helper\ImportError $errorHelper,
-        \FireGento\FastSimpleImport2\Model\ArrayAdapterFactory $arrayAdapterFactory
+        \FireGento\FastSimpleImport2\Model\ArrayAdapterFactory $arrayAdapterFactory,
+        \FireGento\FastSimpleImport2\Helper\Config $configHelper
     )
     {
         $this->importModel = $importModel;
         $this->errorHelper = $errorHelper;
         $this->arrayAdapterFactory = $arrayAdapterFactory;
+        $this->configHelper = $configHelper;
 
         $sourceData = array(
-            'entity' => $this->getEntityCode(),
-            'behavior' => $this->getBehavior(),
+            'entity' => $this->configHelper->getEntity(),
+            'behavior' => $this->configHelper->getBehavior(),
             'validation_strategy' => 'validation-stop-on-errors',
             'allowed_error_count' => 10,
             'import_images_file_dir' => '',
@@ -55,27 +62,11 @@ class Importer
     }
 
     /**
-     * @return string
-     */
-    public function getEntityCode()
-    {
-        return $this->importModel->getData('entity');
-    }
-
-    /**
      * @param string $entityCode
      */
     public function setEntityCode($entityCode)
     {
         $this->importModel->setData('entity', $entityCode);
-    }
-
-    /**
-     * @return string
-     */
-    public function getBehavior()
-    {
-        return $this->importModel->getData('behavior');
     }
 
     /**
