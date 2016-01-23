@@ -1,0 +1,9 @@
+{
+  "name": "firegento/fastsimpleimport2",
+  "description": "Wrapper for Magento2 ImportExport functionality, which imports products and customers from arrays",
+  "homepage": "https://github.com/magento-hackathon/FireGento_FastSimpleImport2",
+  "require": {
+
+  }
+}
+
