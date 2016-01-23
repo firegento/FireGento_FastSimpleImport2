@@ -1,10 +1,15 @@
 <?php
+/**
+ * Copyright © 2016 FireGento e.V. - All rights reserved.
+ * See LICENSE.md bundled with this module for license details.
+ */
 namespace FireGento\FastSimpleImport2\Helper;
 use Magento\ImportExport\Model\History as ModelHistory;
 use Magento\ImportExport\Model\Import\Entity\AbstractEntity;
 use Magento\ImportExport\Model\Import\ErrorProcessing\ProcessingErrorAggregatorInterface;
 
-class ImportError extends \Magento\Framework\App\Helper\AbstractHelper{
+class ImportError extends \Magento\Framework\App\Helper\AbstractHelper
+{
     const IMPORT_HISTORY_FILE_DOWNLOAD_ROUTE = '*/history/download';
 
     /**
@@ -148,6 +153,7 @@ class ImportError extends \Magento\Framework\App\Helper\AbstractHelper{
     {
         return $this->getUrl(self::IMPORT_HISTORY_FILE_DOWNLOAD_ROUTE, ['filename' => $fileName]);
     }
+    
     /**
      * Generate url by route and parameters
      *
@@ -159,5 +165,4 @@ class ImportError extends \Magento\Framework\App\Helper\AbstractHelper{
     {
         return $this->_helper->getUrl($route, $params);
     }
-
 }

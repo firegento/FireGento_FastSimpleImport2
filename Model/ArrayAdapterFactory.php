@@ -1,4 +1,8 @@
 <?php
+/**
+ * Copyright © 2016 FireGento e.V. - All rights reserved.
+ * See LICENSE.md bundled with this module for license details.
+ */
 namespace FireGento\FastSimpleImport2\Model;
 class ArrayAdapterFactory
 {
@@ -15,7 +19,11 @@ class ArrayAdapterFactory
         $this->_instanceName = $instanceName;
     }
 
-    public function create(array $data = array())
+    /**
+     * @param array $data
+     * @return \FireGento\FastSimpleImport2\Model\ArrayAdapter
+     */
+    public function create(array $data = [])
     {
         return $this->_objectManager->create($this->_instanceName, $data);
     }

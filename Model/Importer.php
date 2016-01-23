@@ -1,4 +1,8 @@
 <?php
+/**
+ * Copyright © 2016 FireGento e.V. - All rights reserved.
+ * See LICENSE.md bundled with this module for license details.
+ */
 namespace FireGento\FastSimpleImport2\Model;
 class Importer
 {
@@ -31,14 +35,16 @@ class Importer
 
     public function processImport($dataArray)
     {
-        $this->_validateData($dataArray);
-        $this->_importData();
+        if ($this->_validateData($dataArray)) {
+            $this->_importData();
+        }
     }
 
     protected function _validateData($dataArray)
     {
         $source = $this->arrayAdapterFactory->create(array('data'=>$dataArray));
         $this->validationResult = $this->importModel->validateSource($source);
+        return $this->validationResult;
     }
 
     protected function _importData()

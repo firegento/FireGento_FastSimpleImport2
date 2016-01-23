@@ -1,5 +1,8 @@
 <?php
-
+/**
+ * Copyright © 2016 FireGento e.V. - All rights reserved.
+ * See LICENSE.md bundled with this module for license details.
+ */
 namespace FireGento\FastSimpleImport2\Console\Command;
 
 use Magento\Backend\App\Area\FrontNameResolver;
@@ -105,12 +108,12 @@ class TestCommand extends Command
      */
     protected function generateSimpleTestProducts()
     {
-        $data = array();
+        $data = [];
         for ($i = 1; $i <= 10; $i++) {
-            $data [] = array(
-                'sku' => 'FIREGENTO-' . 99999+$i,
+            $data[] = array(
+                'sku' => 'FIREGENTO-' . $i,
                 'attribute_set_code' => 'Default',
-                //'product_type' => 'simple',
+                'product_type' => 'simple',
                 'product_websites' => 'base',
                 'name' => 'FireGento Test Product ' . $i,
                 'price' => '14.0000',

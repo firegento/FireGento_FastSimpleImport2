@@ -1,4 +1,8 @@
 <?php
+/**
+ * Copyright © 2016 FireGento e.V. - All rights reserved.
+ * See LICENSE.md bundled with this module for license details.
+ */
 namespace FireGento\FastSimpleImport2\Model;
 class ArrayAdapter extends \Magento\ImportExport\Model\Import\AbstractSource
 {
@@ -15,7 +19,7 @@ class ArrayAdapter extends \Magento\ImportExport\Model\Import\AbstractSource
     /**
      * Go to given position and check if it is valid
      *
-     * @throws OutOfBoundsException
+     * @throws \OutOfBoundsException
      * @param int $position
      * @return void
      */
@@ -27,14 +31,17 @@ class ArrayAdapter extends \Magento\ImportExport\Model\Import\AbstractSource
             throw new \OutOfBoundsException("invalid seek position ($position)");
         }
     }
+
+    /**
+     * ArrayAdapter constructor.
+     * @param array $data
+     */
     public function __construct($data)
     {
         $this->_array = $data;
         $this->_position = 0;
         $colnames = array_keys($this->current() );
         parent::__construct($colnames);
-
-
     }
 
     /**
@@ -60,7 +67,7 @@ class ArrayAdapter extends \Magento\ImportExport\Model\Import\AbstractSource
     /**
      * Get current position
      *
-     * @return scalar
+     * @return int
      */
     public function key()
     {
