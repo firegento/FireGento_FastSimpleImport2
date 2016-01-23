@@ -8,7 +8,7 @@ Requirements
 
 Support
 -------
-If you encounter any problems or bugs, please create an issue on [GitHub](https://github.com/firegento/firegento-magesetup2/issues).
+If you encounter any problems or bugs, please create an issue on [GitHub](https://github.com/magento-hackathon/FireGento_FastSimpleImport2/issues).
 
 Contribution
 ------------
