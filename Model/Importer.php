@@ -7,14 +7,6 @@ namespace FireGento\FastSimpleImport2\Model;
 class Importer
 {
     /**
-     * @var string
-     */
-    protected $entityCode;
-    /**
-     * @var string
-     */
-    protected $behavior;
-    /**
      * @var \Magento\ImportExport\Model\Import
      */
     protected $importModel;
@@ -67,7 +59,7 @@ class Importer
      */
     public function getEntityCode()
     {
-        return $this->entityCode;
+        return $this->importModel->getData('entity');
     }
 
     /**
@@ -75,7 +67,7 @@ class Importer
      */
     public function setEntityCode($entityCode)
     {
-        $this->entityCode = $entityCode;
+        $this->importModel->setData('entity', $entityCode);
     }
 
     /**
@@ -83,7 +75,7 @@ class Importer
      */
     public function getBehavior()
     {
-        return $this->behavior;
+        return $this->importModel->getData('behavior');
     }
 
     /**
@@ -91,7 +83,7 @@ class Importer
      */
     public function setBehavior($behavior)
     {
-        $this->behavior = $behavior;
+        $this->importModel->setData('behavior', $behavior);
     }
 
     public function processImport($dataArray)
