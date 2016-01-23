@@ -18,7 +18,7 @@
       "registration.php"
     ],
     "psr-4": {
-      "FireGento\\FastSimpleExport2\\": ""
+      "FireGento\\FastSimpleImport2\\": ""
     }
   }
 }
