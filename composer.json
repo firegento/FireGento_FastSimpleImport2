@@ -3,10 +3,7 @@
   "description": "Wrapper for Magento2 ImportExport functionality, which imports products and customers from arrays",
   "homepage": "https://github.com/magento-hackathon/FireGento_FastSimpleImport2",
   "require": {
-    "php": "~5.5.0|~5.6.0|~7.0.0",
-    "magento/module-store": "1.0.0-beta",
-    "magento/module-backend": "1.0.0-beta",
-    "magento/framework": "1.0.0-beta"
+    "php": "~5.5.0|~5.6.0|~7.0.0"
   },
   "type": "magento2-module",
   "license": "GPL-3.0",
