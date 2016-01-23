@@ -11,7 +11,8 @@ use Magento\Store\Model\StoreManager;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
-
+use Symfony\Component\Console\Input\InputArgument;
+use Magento\ImportExport\Model\Import;
 /**
  * Class TestCommand
  * @package FireGento\FastSimpleImport2\Console\Command
@@ -20,18 +21,15 @@ use Symfony\Component\Console\Output\OutputInterface;
 class TestCommand extends Command
 {
     /**
-     * @var \Magento\ImportExport\Model\Import
+     * Key for languages parameter
      */
-    protected $importModel;
+    const BEHAVIOUR_OPTION = 'behaviour';
+
 
     /**
      * @var \Magento\Framework\ObjectManagerInterface
      */
     protected $objectManager;
-    /**
-     * @var \FireGento\FastSimpleImport2\Helper\ImportError
-     */
-    protected $errorHelper;
 
     /**
      * Object manager factory
@@ -56,6 +54,7 @@ class TestCommand extends Command
     {
         $this->setName('firegento:fastsimpleimport2:test')
             ->setDescription('Test the import functianlity ');
+
         parent::configure();
     }
 
@@ -88,6 +87,8 @@ class TestCommand extends Command
         $importerModel = $this->objectManager->create('FireGento\FastSimpleImport2\Model\Importer');
 
         $productsArray = $this->generateSimpleTestProducts();
+        $importerModel->setBehavior(Import::BEHAVIOR_APPEND);
+        $importerModel->setEntityCode('catalog_product');
         try {
             $importerModel->processImport($productsArray);
         } catch (\Exception $e) {
