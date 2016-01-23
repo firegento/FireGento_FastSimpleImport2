@@ -6,6 +6,7 @@ class Importer
     protected $errorHelper;
     protected $errorMessages;
     protected $arrayAdapterFactory;
+    protected $validationResult;
 
     public function __construct(
         \Magento\ImportExport\Model\Import $importModel,
@@ -24,42 +25,49 @@ class Importer
             'allowed_error_count' => 10,
             'import_images_file_dir' => '',
         );
-        //print_r($sourceData);
 
         $this->importModel->setData($sourceData);
-
     }
 
-    protected function _importData(){
-
-
-        $this->importModel->importSource();
-        $this->printErrors();
-    }
-    protected function _validateData($dataArray){
-
-        $source = $this->arrayAdapterFactory->create(array('data'=>$dataArray));
-        $validationResult = $this->importModel->validateSource($source);
-        $this->printErrors();
-
-    }
     public function processImport($dataArray)
     {
         $this->_validateData($dataArray);
         $this->_importData();
-
     }
-    public function printErrors(){
+
+    protected function _validateData($dataArray)
+    {
+        $source = $this->arrayAdapterFactory->create(array('data'=>$dataArray));
+        $this->validationResult = $this->importModel->validateSource($source);
+    }
+
+    protected function _importData()
+    {
+        $this->importModel->importSource();
+        $this->_handleImportResult();
+    }
+    
+    public function getValidationResult()
+    {
+        return $this->validationResult;
+    }
+    
+    public function getLogTrace()
+    {
+        return $this->importModel->getFormatedLogTrace();
+    }
+    
+    public function getErrorMessages()
+    {
+        return $this->errorMessages;
+    }
+
+    protected function _handleImportResult()
+    {
         $errorAggregator = $this->importModel->getErrorAggregator();
-        if ($this->importModel->getErrorAggregator()->hasToBeTerminated()) {
-            $this->errorMessages = $this->errorHelper->getImportErrorMessages($errorAggregator);
-
-        } else {
-            //$this->importModel->invalidateIndex();
-            $this->errorMessages = $this->errorHelper->getImportErrorMessages($errorAggregator);
+        $this->errorMessages = $this->errorHelper->getImportErrorMessages($errorAggregator);
+        if (!$this->importModel->getErrorAggregator()->hasToBeTerminated()) {
+            $this->importModel->invalidateIndex();
         }
-        var_dump($this->importModel->getFormatedLogTrace());
-        var_dump($this->errorMessages);
     }
-
 }

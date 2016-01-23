@@ -80,7 +80,7 @@ class TestCommand extends Command
         $configLoader = $this->objectManager->get('Magento\Framework\ObjectManager\ConfigLoaderInterface');
         $this->objectManager->configure($configLoader->load($area));
         
-        $output->writeln('Start Import');
+        $output->writeln('Import started');
 
         $time = microtime(true);
         
@@ -88,9 +88,16 @@ class TestCommand extends Command
         $importerModel = $this->objectManager->create('FireGento\FastSimpleImport2\Model\Importer');
 
         $productsArray = $this->generateSimpleTestProducts();
-        $importerModel->processImport($productsArray);
+        try {
+            $importerModel->processImport($productsArray);
+        } catch (\Exception $e) {
+            $output->writeln($e->getMessage());
+        }
 
-        $output->writeln('Elapsed time: ' . round(microtime(true) - $time, 2) . 's' . "\n");
+        $output->write($importerModel->getLogTrace());
+        $output->write($importerModel->getErrorMessages());
+
+        $output->writeln('Import finished. Elapsed time: ' . round(microtime(true) - $time, 2) . 's' . "\n");
     }
 
     /**
@@ -101,9 +108,9 @@ class TestCommand extends Command
         $data = array();
         for ($i = 1; $i <= 10; $i++) {
             $data [] = array(
-                'sku' => 'FIREGENTO-' . $i,
+                'sku' => 'FIREGENTO-' . 99999+$i,
                 'attribute_set_code' => 'Default',
-                'product_type' => 'simple',
+                //'product_type' => 'simple',
                 'product_websites' => 'base',
                 'name' => 'FireGento Test Product ' . $i,
                 'price' => '14.0000',
