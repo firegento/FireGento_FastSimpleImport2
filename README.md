@@ -52,6 +52,15 @@ FireGento Team
 * Website: [http://firegento.com](http://firegento.com)
 * Twitter: [@firegento](https://twitter.com/firegento)
 
+Installation Instructions with Composer
+---------------------------------------------
+
+    composer config repositories.firegento_fastsimpleimport vcs https://github.com/firegento/FireGento_FastSimpleImport2
+    composer require firegento/fastsimpleimport2 dev-master
+    bin/magento module:enable FireGento_FastSimpleImport2
+    bin/magento setup:upgrade
+    
+    
 Licence
 -------
 [GNU General Public License, version 3 (GPLv3)](http://opensource.org/licenses/gpl-3.0)
