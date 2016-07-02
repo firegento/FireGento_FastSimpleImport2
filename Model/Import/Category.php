@@ -133,7 +133,7 @@ class Category extends \Magento\ImportExport\Model\Import\AbstractEntity
      *
      * @var array
      */
-    protected $_particularAttributes = array(
+    protected $_specialAttributes = array(
         self::COL_STORE, self::COL_ROOT, self::COL_CATEGORY
     );
 
@@ -142,7 +142,7 @@ class Category extends \Magento\ImportExport\Model\Import\AbstractEntity
      *
      * @var array
      */
-    protected $_permanentAttributes = array(
+    protected $_permanentAttributes= array(
         self::COL_ROOT, self::COL_CATEGORY
     );
 
@@ -253,12 +253,9 @@ class Category extends \Magento\ImportExport\Model\Import\AbstractEntity
         $this->_defaultCategory = $defaultCategory;
         $this->_attributeCollection = $attributeCollection;
 
-        $this->_specialAttributes[] = self::COLUMN_WEBSITE;
-        $this->_specialAttributes[] = self::COLUMN_STORE;
-        $this->_permanentAttributes[] = self::COLUMN_EMAIL;
-        $this->_permanentAttributes[] = self::COLUMN_WEBSITE;
 
-        
+
+
         $this
             ->_initOnTabAttributes()
             ->_initWebsites()
@@ -307,7 +304,7 @@ class Category extends \Magento\ImportExport\Model\Import\AbstractEntity
                 'attribute' => $attribute
             );
         }
-
+        
         return $this;
     }
 
@@ -600,6 +597,7 @@ class Category extends \Magento\ImportExport\Model\Import\AbstractEntity
      */
     protected function _importData()
     {
+
 
         if (Import::BEHAVIOR_DELETE == $this->getBehavior()) {
             $this->_deleteCategories();
@@ -1236,7 +1234,7 @@ class Category extends \Magento\ImportExport\Model\Import\AbstractEntity
      *
      * @return $this
      */
-    protected function _saveValidatedBunches()
+    protected function _saveValidatedBunchess()
     {
         $source = $this->_getSource();
         $source->rewind();
