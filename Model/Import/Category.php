@@ -266,15 +266,19 @@ class Category extends \Magento\ImportExport\Model\Import\AbstractEntity
 
     }
 
+
     /**
-     * Delete Categories.
+     * Delete products.
      *
-     * @return AvS_FastSimpleImport_Model_Import_Entity_Category
+     * @return $this
+     * @throws \Exception
      */
     protected function _deleteCategories()
     {
+        $productEntityTable = $this->_resourceFactory->create()->getEntityTable();
+
         while ($bunch = $this->_dataSourceModel->getNextBunch()) {
-            $idToDelete = array();
+            $idToDelete = [];
 
             foreach ($bunch as $rowNum => $rowData) {
                 $this->_filterRowData($rowData);
@@ -283,11 +287,22 @@ class Category extends \Magento\ImportExport\Model\Import\AbstractEntity
                 }
             }
             if ($idToDelete) {
-                $this->_connection->query(
-                    $this->_connection->quoteInto(
-                        "DELETE FROM `{$this->_entityTable}` WHERE `entity_id` IN (?)", $idToDelete
-                    )
-                );
+                $this->countItemsDeleted += count($idToDelete);
+                $this->transactionManager->start($this->_connection);
+                try {
+                    $this->objectRelationProcessor->delete(
+                        $this->transactionManager,
+                        $this->_connection,
+                        $productEntityTable,
+                        $this->_connection->quoteInto('entity_id IN (?)', $idToDelete),
+                        ['entity_id' => $idToDelete]
+                    );
+                    $this->transactionManager->commit();
+                } catch (\Exception $e) {
+                    $this->transactionManager->rollBack();
+                    throw $e;
+                }
+                $this->_eventManager->dispatch('catalog_product_import_bunch_delete_after', ['adapter' => $this, 'bunch' => $bunch]);
             }
         }
         return $this;
