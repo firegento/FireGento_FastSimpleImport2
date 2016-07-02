@@ -56,7 +56,7 @@ class Category extends \Magento\ImportExport\Model\Import\AbstractEntity
      *
      * @var string
      */
-    protected $_masterAttributeCode = '_category';
+    protected $masterAttributeCode = '_category';
 
     /**
      * Category attributes parameters.
@@ -210,6 +210,14 @@ class Category extends \Magento\ImportExport\Model\Import\AbstractEntity
      * @var \Magento\Catalog\Model\ResourceModel\Category\Attribute\Collection
      */
     private $_attributeCollection;
+    /**
+     * @var \Magento\Catalog\Model\ResourceModel\Category\Collection
+     */
+    private $_categoryCollection;
+    /**
+     * @var \Magento\ImportExport\Model\ResourceModel\Helper
+     */
+    private $resourceHelper;
 
     /**
      * Category constructor.
@@ -221,6 +229,9 @@ class Category extends \Magento\ImportExport\Model\Import\AbstractEntity
      * @param ProcessingErrorAggregatorInterface $errorAggregator
      * @param \Magento\Store\Model\StoreManagerInterface $storeManager
      * @param \FireGento\FastSimpleImport2\ResourceModel\Import\Category\StorageFactory $storageFactory
+     * @param \Magento\Catalog\Model\Category $defaultCategory
+     * @param \Magento\Catalog\Model\ResourceModel\Category\Attribute\Collection $attributeCollection
+     * @param \Magento\Catalog\Model\ResourceModel\Category\Collection $categoryCollection
      * @param array $data
      */
     public function __construct(
@@ -234,6 +245,8 @@ class Category extends \Magento\ImportExport\Model\Import\AbstractEntity
         \FireGento\FastSimpleImport2\ResourceModel\Import\Category\StorageFactory $storageFactory,
         \Magento\Catalog\Model\Category $defaultCategory,
         \Magento\Catalog\Model\ResourceModel\Category\Attribute\Collection $attributeCollection,
+        \Magento\Catalog\Model\ResourceModel\Category\Collection $categoryCollection,
+        \Magento\Eav\Model\Config $eavConfig,
         array $data = []
     )
     {
@@ -252,7 +265,11 @@ class Category extends \Magento\ImportExport\Model\Import\AbstractEntity
         $this->_storageFactory = $storageFactory;
         $this->_defaultCategory = $defaultCategory;
         $this->_attributeCollection = $attributeCollection;
+        $this->_categoryCollection = $categoryCollection;
+        $this->resourceHelper = $resourceHelper;
 
+        $entityType = $eavConfig->getEntityType($this->getEntityTypeCode());
+        $this->_entityTypeId = $entityType->getEntityTypeId();
 
         foreach ($this->_messageTemplates as $errorCode => $message) {
             $this->getErrorAggregator()->addErrorMessageTemplate($errorCode, $message);
@@ -303,7 +320,7 @@ class Category extends \Magento\ImportExport\Model\Import\AbstractEntity
                 'is_static' => $attribute->isStatic(),
                 'rules' => $attribute->getValidateRules() ? unserialize($attribute->getValidateRules()) : null,
                 'type' => \Magento\ImportExport\Model\Import::getAttributeType($attribute),
-                //'options' => $this->getAttributeOptions($attribute),
+                'options' => $this->getAttributeOptions($attribute),
                 'attribute' => $attribute
             );
         }
@@ -319,15 +336,36 @@ class Category extends \Magento\ImportExport\Model\Import\AbstractEntity
     protected function _initCategories()
     {
 
-        if (!isset($data['page_size'])) {
-            $data['page_size'] = $this->_pageSize;
-        }
-        $this->_customerStorage = isset(
-            $data['category_storage']
-        ) ? $data['category_storage'] : $this->_storageFactory->create(
-            ['data' => $data]
-        );
+        $collection = $this->_categoryCollection->addNameToResult();
 
+        foreach ($collection as $category) {
+
+            $structure = explode('/', $category->getPath());
+            $pathSize  = count($structure);
+            if ($pathSize > 1) {
+                $path = array();
+                for ($i = 1; $i < $pathSize; $i++) {
+                    $path[] = $collection->getItemById($structure[$i])->getName();
+                }
+                $rootCategoryName = array_shift($path);
+                if (!isset($this->_categoriesWithRoots[$rootCategoryName])) {
+                    $this->_categoriesWithRoots[$rootCategoryName] = array();
+                }
+                $index = $this->_implodeEscaped('/', $path);
+                $this->_categoriesWithRoots[$rootCategoryName][$index] = array(
+                    'entity_id' => $category->getId(),
+                    'path' => $category->getPath(),
+                    'level' => $category->getLevel(),
+                    'position' => $category->getPosition()
+                );
+                //allow importing by ids.
+                if (!isset($this->_categoriesWithRoots[$structure[1]])) {
+                    $this->_categoriesWithRoots[$structure[1]] = array();
+                }
+                $this->_categoriesWithRoots[$structure[1]][$category->getId()] =
+                    $this->_categoriesWithRoots[$rootCategoryName][$index];
+            }
+        }
         return $this;
 
     }
@@ -600,9 +638,6 @@ class Category extends \Magento\ImportExport\Model\Import\AbstractEntity
      */
     protected function _importData()
     {
-
-
-
         if (Import::BEHAVIOR_DELETE == $this->getBehavior()) {
             $this->_deleteCategories();
         } else {
@@ -664,6 +699,7 @@ class Category extends \Magento\ImportExport\Model\Import\AbstractEntity
     public function validateRow(array $rowData, $rowNum)
     {
 
+
         static $root = null;
         static $category = null;
 
@@ -677,6 +713,7 @@ class Category extends \Magento\ImportExport\Model\Import\AbstractEntity
             return !isset($this->_invalidRows[$rowNum]);
         }
         $this->_validatedRows[$rowNum] = true;
+
 
         //check for duplicates
         if (isset($rowData[self::COL_ROOT])
@@ -760,6 +797,7 @@ class Category extends \Magento\ImportExport\Model\Import\AbstractEntity
         if (isset($this->_invalidRows[$rowNum])) {
             $category = false; // mark row as invalid for next address rows
         }
+
 
         return !isset($this->_invalidRows[$rowNum]);
     }
@@ -856,67 +894,7 @@ class Category extends \Magento\ImportExport\Model\Import\AbstractEntity
         return implode('/', $newArray);
     }
 
-    /**
-     * Check one attribute. Can be overridden in child. Copied this validator
-     * from the customer importer.
-     *
-     * @param string $attrCode Attribute code
-     * @param array $attrParams Attribute params
-     * @param array $rowData Row data
-     * @param int $rowNum
-     * @return boolean
-     */
-    public function isAttributeValid($attrCode, array $attrParams, array $rowData, $rowNum)
-    {
-        $message = '';
-        switch ($attrParams['type']) {
-            case 'varchar':
-                $val = Mage::helper('core/string')->cleanString($rowData[$attrCode]);
-                $valid = Mage::helper('core/string')->strlen($val) < self::DB_MAX_VARCHAR_LENGTH;
-                $message = 'String is too long, only ' . self::DB_MAX_VARCHAR_LENGTH . ' characters allowed. Your input: ' . $rowData[$attrCode] . ', length: ' . strlen($val);
-                break;
-            case 'decimal':
-                $val = trim($rowData[$attrCode]);
-                $valid = (float)$val == $val;
-                $message = 'Decimal value expected. Your Input: ' . $rowData[$attrCode];
-                break;
-            case 'select':
-            case 'multiselect':
-                $valid = isset($attrParams['options'][strtolower($rowData[$attrCode])]);
-                $message = 'Possible options are: ' . implode(', ', array_keys($attrParams['options'])) . '. Your input: ' . $rowData[$attrCode];
-                break;
-            case 'int':
-                $val = trim($rowData[$attrCode]);
-                $valid = (int)$val == $val;
-                $message = 'Integer value expected. Your Input: ' . $rowData[$attrCode];
-                break;
-            case 'datetime':
-                $val = trim($rowData[$attrCode]);
-                $valid = strtotime($val) !== false
-                    || preg_match('/^\d{2}.\d{2}.\d{2,4}(?:\s+\d{1,2}.\d{1,2}(?:.\d{1,2})?)?$/', $val);
-                $message = 'Datetime value expected. Your Input: ' . $rowData[$attrCode];
-                break;
-            case 'text':
-                $val = Mage::helper('core/string')->cleanString($rowData[$attrCode]);
-                $valid = Mage::helper('core/string')->strlen($val) < self::DB_MAX_TEXT_LENGTH;
-                $message = 'String is too long, only ' . self::DB_MAX_TEXT_LENGTH . ' characters allowed. Your input: ' . $rowData[$attrCode] . ', length: ' . strlen($val);
-                break;
-            default:
-                $valid = true;
-                break;
-        }
 
-        if (!$valid) {
-            $this->addRowError(Mage::helper('importexport')->__("Invalid value for '%s'") . '. ' . $message, $rowNum, $attrCode);
-        } elseif (!empty($attrParams['is_unique'])) {
-            if (isset($this->_uniqueAttributes[$attrCode][$rowData[$attrCode]])) {
-                $this->addRowError(Mage::helper('importexport')->__("Duplicate Unique Attribute for '%s'"), $rowNum, $attrCode);
-                return false;
-            }
-            $this->_uniqueAttributes[$attrCode][$rowData[$attrCode]] = true;
-        }
-        return (bool)$valid;
-    }
 
     /**
      * Gather and save information about category entities.
@@ -925,8 +903,11 @@ class Category extends \Magento\ImportExport\Model\Import\AbstractEntity
      */
     protected function _saveCategories()
     {
-        $strftimeFormat = Varien_Date::convertZendToStrftime(Varien_Date::DATETIME_INTERNAL_FORMAT, true, true);
-        $nextEntityId = Mage::getResourceHelper('importexport')->getNextAutoincrement($this->_entityTable);
+
+        //$strftimeFormat = \Varien_Date::convertZendToStrftime(Varien_Date::DATETIME_INTERNAL_FORMAT, true, true);
+        // TODO: Get this Constant
+        $strftimeFormat = "12.00.2016";
+        $nextEntityId = $this->resourceHelper->getNextAutoincrement($this->_entityTable);
         static $entityId;
 
         while ($bunch = $this->_dataSourceModel->getNextBunch()) {
@@ -953,9 +934,9 @@ class Category extends \Magento\ImportExport\Model\Import\AbstractEntity
                     $entityRow = array(
                         'parent_id' => $parentCategory['entity_id'],
                         'level' => $parentCategory['level'] + 1,
-                        'created_at' => empty($rowData['created_at']) ? now()
+                        'created_at' => empty($rowData['created_at']) ? "now()"
                             : gmstrftime($strftimeFormat, strtotime($rowData['created_at'])),
-                        'updated_at' => now(),
+                        'updated_at' => "now()",
                         'position' => $rowData['position']
                     );
 
@@ -995,8 +976,8 @@ class Category extends \Magento\ImportExport\Model\Import\AbstractEntity
                 // Attributes phase
                 $rowStore = self::SCOPE_STORE == $rowScope ? $this->_storeCodeToId[$rowData[self::COL_STORE]] : 0;
 
-                /* @var $category Mage_Catalog_Model_Category */
-                $category = Mage::getModel('catalog/category', $rowData);
+                /** @var $category \Magento\Catalog\Model\Category */
+                $category = $this->_defaultCategory->setData($rowData);
 
                 foreach (array_intersect_key($rowData, $this->_attributes) as $attrCode => $attrValue) {
                     if (!$this->_attributes[$attrCode]['is_static']) {
@@ -1072,7 +1053,7 @@ class Category extends \Magento\ImportExport\Model\Import\AbstractEntity
     protected function _prepareRowForDb(array $rowData)
     {
         $rowData = parent::_prepareRowForDb($rowData);
-        if (Mage_ImportExport_Model_Import::BEHAVIOR_DELETE == $this->getBehavior()) {
+        if (Import::BEHAVIOR_DELETE == $this->getBehavior()) {
             return $rowData;
         }
 
@@ -1260,10 +1241,43 @@ class Category extends \Magento\ImportExport\Model\Import\AbstractEntity
         }
         //$this->checkUrlKeyDuplicates();
         //$this->getOptionEntity()->validateAmbiguousData();
+        //var_dump($source);
         return parent::_saveValidatedBunches();
     }
     protected function _customFieldsMapping($rowData)
     {
         return $rowData;
+    }
+    /**
+     * Returns attributes all values in label-value or value-value pairs form. Labels are lower-cased.
+     *
+     * @param \Magento\Eav\Model\Entity\Attribute\AbstractAttribute $attribute
+     * @return array
+     */
+    public function getAttributeOptions(\Magento\Eav\Model\Entity\Attribute\AbstractAttribute $attribute)
+    {
+        $options = [];
+
+        if ($attribute->usesSource()) {
+            // should attribute has index (option value) instead of a label?
+            $index = in_array($attribute->getAttributeCode(), $this->_indexValueAttributes) ? 'value' : 'label';
+
+            // only default (admin) store values used
+            $attribute->setStoreId(\Magento\Store\Model\Store::DEFAULT_STORE_ID);
+
+            try {
+                foreach ($attribute->getSource()->getAllOptions(false) as $option) {
+                    foreach (is_array($option['value']) ? $option['value'] : [$option] as $innerOption) {
+                        if (strlen($innerOption['value'])) {
+                            // skip ' -- Please Select -- ' option
+                            $options[$innerOption['value']] = (string)$innerOption[$index];
+                        }
+                    }
+                }
+            } catch (\Exception $e) {
+                // ignore exceptions connected with source models
+            }
+        }
+        return $options;
     }
 }
