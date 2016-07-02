@@ -304,7 +304,7 @@ class Category extends \Magento\ImportExport\Model\Import\AbstractEntity
                 'attribute' => $attribute
             );
         }
-        
+
         return $this;
     }
 
@@ -599,6 +599,7 @@ class Category extends \Magento\ImportExport\Model\Import\AbstractEntity
     {
 
 
+
         if (Import::BEHAVIOR_DELETE == $this->getBehavior()) {
             $this->_deleteCategories();
         } else {
@@ -659,6 +660,7 @@ class Category extends \Magento\ImportExport\Model\Import\AbstractEntity
      */
     public function validateRow(array $rowData, $rowNum)
     {
+
         static $root = null;
         static $category = null;
 
@@ -687,7 +689,7 @@ class Category extends \Magento\ImportExport\Model\Import\AbstractEntity
         $rowScope = $this->getRowScope($rowData);
 
         // BEHAVIOR_DELETE use specific validation logic
-        if (Mage_ImportExport_Model_Import::BEHAVIOR_DELETE == $this->getBehavior()) {
+        if (Import::BEHAVIOR_DELETE == $this->getBehavior()) {
             if (self::SCOPE_DEFAULT == $rowScope
                 && !isset($this->_categoriesWithRoots[$rowData[self::COL_ROOT]][$rowData[self::COL_CATEGORY]])
             ) {
@@ -1234,9 +1236,9 @@ class Category extends \Magento\ImportExport\Model\Import\AbstractEntity
      *
      * @return $this
      */
-    protected function _saveValidatedBunchess()
+    protected function _saveValidatedBunches()
     {
-        $source = $this->_getSource();
+        $source = $this->getSource();
         $source->rewind();
         while ($source->valid()) {
             try {
@@ -1253,8 +1255,12 @@ class Category extends \Magento\ImportExport\Model\Import\AbstractEntity
             $this->validateRow($rowData, $source->key());
             $source->next();
         }
-        $this->checkUrlKeyDuplicates();
-        $this->getOptionEntity()->validateAmbiguousData();
+        //$this->checkUrlKeyDuplicates();
+        //$this->getOptionEntity()->validateAmbiguousData();
         return parent::_saveValidatedBunches();
+    }
+    protected function _customFieldsMapping($rowData)
+    {
+        return $rowData;
     }
 }
