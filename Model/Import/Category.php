@@ -254,6 +254,9 @@ class Category extends \Magento\ImportExport\Model\Import\AbstractEntity
         $this->_attributeCollection = $attributeCollection;
 
 
+        foreach ($this->_messageTemplates as $errorCode => $message) {
+            $this->getErrorAggregator()->addErrorMessageTemplate($errorCode, $message);
+        }
 
 
         $this
