@@ -7,10 +7,6 @@ namespace FireGento\FastSimpleImport2\Model;
 class Importer
 {
     /**
-     * @var \Magento\ImportExport\Model\Import
-     */
-    protected $importModel;
-    /**
      * @var \FireGento\FastSimpleImport2\Helper\ImportError
      */
     protected $errorHelper;
@@ -30,6 +26,18 @@ class Importer
      * @var \FireGento\FastSimpleImport2\Helper\Config
      */
     protected $configHelper;
+    /**
+     * @var \Magento\ImportExport\Model\ImportFactory
+     */
+    private $importModelFactory;
+    /**
+     * @var array
+     */
+    protected $settings;
+    /**
+     * @var string
+     */
+    protected $logTrace = "";
 
     /**
      * Importer constructor.
@@ -39,26 +47,33 @@ class Importer
      * @param \FireGento\FastSimpleImport2\Helper\Config $configHelper
      */
     public function __construct(
-        \Magento\ImportExport\Model\Import $importModel,
+        \Magento\ImportExport\Model\ImportFactory $importModelFactory,
         \FireGento\FastSimpleImport2\Helper\ImportError $errorHelper,
         \FireGento\FastSimpleImport2\Model\ArrayAdapterFactory $arrayAdapterFactory,
         \FireGento\FastSimpleImport2\Helper\Config $configHelper
     )
     {
-        $this->importModel = $importModel;
+
         $this->errorHelper = $errorHelper;
         $this->arrayAdapterFactory = $arrayAdapterFactory;
         $this->configHelper = $configHelper;
-
-        $sourceData = [
+        $this->importModelFactory = $importModelFactory;
+        $this->settings = [
             'entity' => $this->configHelper->getEntity(),
             'behavior' => $this->configHelper->getBehavior(),
             'validation_strategy' => $this->configHelper->getValidationStrategy(),
             'allowed_error_count' => $this->configHelper->getAllowedErrorCount(),
             'import_images_file_dir' => $this->configHelper->getImportFileDir(),
         ];
+    }
 
-        $this->importModel->setData($sourceData);
+    /**
+     * @return \Magento\ImportExport\Model\Import
+     */
+    public function createImportModel(){
+        $importModel = $this->importModelFactory->create();
+        $importModel->setData($this->settings);
+        return $importModel;
     }
 
     public function processImport($dataArray)
@@ -70,23 +85,27 @@ class Importer
 
     protected function _validateData($dataArray)
     {
+        $importModel = $this->createImportModel();
         $source = $this->arrayAdapterFactory->create(array('data' => $dataArray));
-        $this->validationResult = $this->importModel->validateSource($source);
+        $this->validationResult = $importModel->validateSource($source);
+        $this->addToLogTrace($importModel);
         return $this->validationResult;
     }
 
     protected function _importData()
     {
-        $this->importModel->importSource();
-        $this->_handleImportResult();
+        $importModel = $this->createImportModel();
+        $importModel->importSource();
+        $this->_handleImportResult($importModel);
     }
 
-    protected function _handleImportResult()
+    protected function _handleImportResult($importModel)
     {
-        $errorAggregator = $this->importModel->getErrorAggregator();
+        $errorAggregator = $importModel->getErrorAggregator();
         $this->errorMessages = $this->errorHelper->getImportErrorMessages($errorAggregator);
-        if (!$this->importModel->getErrorAggregator()->hasToBeTerminated()) {
-            $this->importModel->invalidateIndex();
+        $this->addToLogTrace($importModel);
+        if (!$importModel->getErrorAggregator()->hasToBeTerminated()) {
+            $importModel->invalidateIndex();
         }
     }
 
@@ -95,7 +114,8 @@ class Importer
      */
     public function setEntityCode($entityCode)
     {
-        $this->importModel->setData('entity', $entityCode);
+        $this->settings['entity'] = $entityCode;
+
     }
 
     /**
@@ -103,7 +123,7 @@ class Importer
      */
     public function setBehavior($behavior)
     {
-        $this->importModel->setData('behavior', $behavior);
+        $this->settings['behavior'] = $behavior;
     }
 
     /**
@@ -111,7 +131,7 @@ class Importer
      */
     public function setValidationStrategy($strategy)
     {
-        $this->importModel->setData('validation_strategy', $strategy);
+        $this->settings['validation_strategy'] = $strategy;
     }
 
     /**
@@ -119,7 +139,7 @@ class Importer
      */
     public function setAllowedErrorCount($count)
     {
-        $this->importModel->setData('allowed_error_count', $count);
+        $this->settings['allowed_error_count'] = $count;
     }
 
     /**
@@ -127,7 +147,7 @@ class Importer
      */
     public function setImportImagesFileDir($dir)
     {
-        $this->importModel->setData('import_images_file_dir', $dir);
+        $this->settings['import_images_file_dir'] = $dir;
     }
 
     public function getValidationResult()
@@ -135,9 +155,12 @@ class Importer
         return $this->validationResult;
     }
 
+    public function addToLogTrace($importModel){
+        $this->logTrace = $this->logTrace.$importModel->getFormatedLogTrace();
+    }
     public function getLogTrace()
     {
-        return $this->importModel->getFormatedLogTrace();
+        return $this->logTrace;
     }
 
     public function getErrorMessages()
