@@ -218,6 +218,10 @@ class Category extends \Magento\ImportExport\Model\Import\AbstractEntity
      * @var \Magento\ImportExport\Model\ResourceModel\Helper
      */
     private $resourceHelper;
+    /**
+     * @var \Magento\Framework\Event\ManagerInterface
+     */
+    private $_eventManager;
 
     /**
      * Category constructor.
@@ -247,6 +251,7 @@ class Category extends \Magento\ImportExport\Model\Import\AbstractEntity
         \Magento\Catalog\Model\ResourceModel\Category\Attribute\Collection $attributeCollection,
         \Magento\Catalog\Model\ResourceModel\Category\Collection $categoryCollection,
         \Magento\Eav\Model\Config $eavConfig,
+        \Magento\Framework\Event\ManagerInterface $eventManager,
         array $data = []
     )
     {
@@ -283,14 +288,13 @@ class Category extends \Magento\ImportExport\Model\Import\AbstractEntity
             ->_initCategories()
             ->_initAttributes()
             ->_initAttributeSetId();
-        /*
-
-        /* @var $categoryResource Mage_Catalog_Model_Resource_Category */
-        //$categoryResource = Mage::getModel('catalog/category')->getResource();
-        //$this->_entityTable = $categoryResource->getEntityTable();
 
 
 
+        $this->_entityTable = $this->_defaultCategory->getResource()->getEntityTable();
+
+
+        $this->_eventManager = $eventManager;
     }
 
     /**
@@ -951,7 +955,7 @@ class Category extends \Magento\ImportExport\Model\Import\AbstractEntity
                         $entityId = $nextEntityId++;
                         $entityRow['entity_id'] = $entityId;
                         $entityRow['path'] = $parentCategory['path'] . '/' . $entityId;
-                        $entityRow['entity_type_id'] = $this->_entityTypeId;
+                        //$entityRow['entity_type_id'] = $this->_entityTypeId;
                         $entityRow['attribute_set_id'] = $this->_defaultAttributeSetId;
                         $entityRowsIn[] = $entityRow;
 
@@ -1153,7 +1157,7 @@ class Category extends \Magento\ImportExport\Model\Import\AbstractEntity
                     foreach ($storeValues as $storeId => $storeValue) {
                         $tableData[] = array(
                             'entity_id' => $entityId,
-                            'entity_type_id' => $this->_entityTypeId,
+                            //'entity_type_id' => $this->_entityTypeId,
                             'attribute_id' => $attributeId,
                             'store_id' => $storeId,
                             'value' => $storeValue
