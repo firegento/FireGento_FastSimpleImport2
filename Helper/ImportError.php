@@ -81,8 +81,7 @@ class ImportError extends \Magento\Framework\App\Helper\AbstractHelper
             if ($errorAggregator->hasFatalExceptions()) {
                 foreach ($this->getSystemExceptions($errorAggregator) as $error) {
                     $message .= $error->getErrorMessage()
-                        . ' <a href="#" onclick="$(this).next().show();$(this).hide();return false;">'
-                        . __('Show more') . '</a><div style="display:none;">' . __('Additional data') . ': '
+                        . __('Additional data') . ': '
                         . $error->getErrorDescription() . '</div>';
                 }
             }
