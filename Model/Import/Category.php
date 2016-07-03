@@ -251,11 +251,7 @@ class Category extends \Magento\ImportExport\Model\Import\AbstractEntity
     public function __construct()
     {
         parent::__construct();
-        $this->_specialAttributes[] = self::COLUMN_WEBSITE;
-        $this->_specialAttributes[] = self::COLUMN_STORE;
-        $this->_permanentAttributes[] = self::COLUMN_EMAIL;
-        $this->_permanentAttributes[] = self::COLUMN_WEBSITE;
-        
+
         $this
             ->_initOnTabAttributes()
             ->_initWebsites()
@@ -270,15 +266,19 @@ class Category extends \Magento\ImportExport\Model\Import\AbstractEntity
 
     }
 
+
     /**
-     * Delete Categories.
+     * Delete products.
      *
      * @return AvS_FastSimpleImport_Model_Import_Entity_Category
+     * @throws \Exception
      */
     protected function _deleteCategories()
     {
+        $productEntityTable = $this->_resourceFactory->create()->getEntityTable();
+
         while ($bunch = $this->_dataSourceModel->getNextBunch()) {
-            $idToDelete = array();
+            $idToDelete = [];
 
             foreach ($bunch as $rowNum => $rowData) {
                 $this->_filterRowData($rowData);
@@ -287,11 +287,22 @@ class Category extends \Magento\ImportExport\Model\Import\AbstractEntity
                 }
             }
             if ($idToDelete) {
-                $this->_connection->query(
-                    $this->_connection->quoteInto(
-                        "DELETE FROM `{$this->_entityTable}` WHERE `entity_id` IN (?)", $idToDelete
-                    )
-                );
+                $this->countItemsDeleted += count($idToDelete);
+                $this->transactionManager->start($this->_connection);
+                try {
+                    $this->objectRelationProcessor->delete(
+                        $this->transactionManager,
+                        $this->_connection,
+                        $productEntityTable,
+                        $this->_connection->quoteInto('entity_id IN (?)', $idToDelete),
+                        ['entity_id' => $idToDelete]
+                    );
+                    $this->transactionManager->commit();
+                } catch (\Exception $e) {
+                    $this->transactionManager->rollBack();
+                    throw $e;
+                }
+                $this->_eventManager->dispatch('catalog_product_import_bunch_delete_after', ['adapter' => $this, 'bunch' => $bunch]);
             }
         }
         return $this;
@@ -648,6 +659,36 @@ class Category extends \Magento\ImportExport\Model\Import\AbstractEntity
                         }
 
                         $attribute->setBackendModel($backModel); // restore 'backend_model' to avoid 'default' setting
+                        } elseif ($backModel && 'available_sort_by' != $attrCode) {
+                            $attribute->getBackend()->beforeSave($category);
+                            $attrValue = $category->getData($attribute->getAttributeCode());
+                    }
+
+                        if (self::SCOPE_STORE == $rowScope) {
+                            if (self::SCOPE_WEBSITE == $attribute->getIsGlobal()) {
+                                // check website defaults already set
+                                if (!isset($attributes[$attrTable][$entityId][$attrId][$rowStore])) {
+                                    $storeIds = $this->_storeIdToWebsiteStoreIds[$rowStore];
+                                }
+                            } elseif (self::SCOPE_STORE == $attribute->getIsGlobal()) {
+                                $storeIds = array($rowStore);
+                }
+            }
+
+            $this->_saveCategoryEntity($entityRowsIn, $entityRowsUp);
+            $this->_saveCategoryAttributes($attributes);
+        }
+        return $this;
+    }
+
+
+                                $attributes[$attrTable][$entityId][$attrId][$storeId] .= $attrValue;
+                            } else {
+                                $attributes[$attrTable][$entityId][$attrId][$storeId] = $attrValue;
+                            }
+                        }
+
+                        $attribute->setBackendModel($backModel); // restore 'backend_model' to avoid 'default' setting
                     }
                 }
             }
@@ -781,6 +822,7 @@ class Category extends \Magento\ImportExport\Model\Import\AbstractEntity
     public function getRowScope(array $rowData)
     {
         if (isset($rowData[self::COL_CATEGORY]) && strlen(trim($rowData[self::COL_CATEGORY]))) {
+            return self::SCOPE_DEFAULT;
         } elseif (empty($rowData[self::COL_STORE])) {
             return self::SCOPE_NULL;
         } else {
@@ -1041,8 +1083,7 @@ class Category extends \Magento\ImportExport\Model\Import\AbstractEntity
 
         return $this;
     }
-
-
+     */
     /**
      * Import behavior setter
      *
@@ -1372,7 +1413,7 @@ class Category extends \Magento\ImportExport\Model\Import\AbstractEntity
                     if (! isset($attributeIdsByCode[$smartAttributes['attribute']])) {
                         $attributeIdsByCode[$smartAttributes['attribute']] =
                             Mage::getSingleton('catalog/product')
-    protected function _saveValidatedBunches()
+                                ->getResource()
                                 ->getAttribute($smartAttributes['attribute'])
                                 ->getId();
                     }
