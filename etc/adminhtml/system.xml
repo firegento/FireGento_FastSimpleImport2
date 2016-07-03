@@ -7,15 +7,15 @@
 -->
 <config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:module:Magento_Config:etc/system_file.xsd">
     <system>
-        <section id="fastsimpleimport2" translate="label" type="text" sortOrder="310" showInDefault="1" showInWebsite="0" showInStore="0">
+        <section id="fastsimpleimport" translate="label" type="text" sortOrder="310" showInDefault="1" showInWebsite="0" showInStore="0">
             <label>FastSimpleImport 2</label>
             <tab>service</tab>
-            <resource>FireGento_FastSimpleImport2::config_fastsimpleimport2</resource>
+            <resource>FireGento_FastSimpleImport::config_fastsimpleimport</resource>
             <group id="default" translate="label" type="text" sortOrder="1" showInDefault="1" showInWebsite="0" showInStore="0">
                 <label>Default Values</label>
                 <field id="behavior" translate="label" type="select" sortOrder="10" showInDefault="1" showInWebsite="0" showInStore="0">
                     <label>Behavior</label>
-                    <source_model>FireGento\FastSimpleImport2\Model\Config\Source\Behavior</source_model>
+                    <source_model>FireGento\FastSimpleImport\Model\Config\Source\Behavior</source_model>
                 </field>
                 <field id="entity" translate="label" type="select" sortOrder="20" showInDefault="1" showInWebsite="0" showInStore="0">
                     <label>Entity Type</label>
@@ -23,7 +23,7 @@
                 </field>
                 <field id="validation_strategy" translate="label" type="select" sortOrder="30" showInDefault="1" showInWebsite="0" showInStore="0">
                     <label>Validation Strategy</label>
-                    <source_model>FireGento\FastSimpleImport2\Model\Config\Source\ValidationStrategy</source_model>
+                    <source_model>FireGento\FastSimpleImport\Model\Config\Source\ValidationStrategy</source_model>
                 </field>
                 <field id="allowed_error_count" translate="label" type="text" sortOrder="40" showInDefault="1" showInWebsite="0" showInStore="0">
                     <label>Allowed Error Count</label>

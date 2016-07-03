@@ -1,5 +1,5 @@
 <?php
-namespace FireGento\FastSimpleImport2\Import;
+namespace FireGento\FastSimpleImport\Import;
 /**
  * Entity Adapter for importing Magento Categories
  *
