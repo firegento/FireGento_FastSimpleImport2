@@ -251,7 +251,11 @@ class Category extends \Magento\ImportExport\Model\Import\AbstractEntity
     public function __construct()
     {
         parent::__construct();
-
+        $this->_specialAttributes[] = self::COLUMN_WEBSITE;
+        $this->_specialAttributes[] = self::COLUMN_STORE;
+        $this->_permanentAttributes[] = self::COLUMN_EMAIL;
+        $this->_permanentAttributes[] = self::COLUMN_WEBSITE;
+        
         $this
             ->_initOnTabAttributes()
             ->_initWebsites()
@@ -777,7 +781,6 @@ class Category extends \Magento\ImportExport\Model\Import\AbstractEntity
     public function getRowScope(array $rowData)
     {
         if (isset($rowData[self::COL_CATEGORY]) && strlen(trim($rowData[self::COL_CATEGORY]))) {
-            return self::SCOPE_DEFAULT;
         } elseif (empty($rowData[self::COL_STORE])) {
             return self::SCOPE_NULL;
         } else {
@@ -1369,7 +1372,7 @@ class Category extends \Magento\ImportExport\Model\Import\AbstractEntity
                     if (! isset($attributeIdsByCode[$smartAttributes['attribute']])) {
                         $attributeIdsByCode[$smartAttributes['attribute']] =
                             Mage::getSingleton('catalog/product')
-                                ->getResource()
+    protected function _saveValidatedBunches()
                                 ->getAttribute($smartAttributes['attribute'])
                                 ->getId();
                     }
