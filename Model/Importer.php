@@ -79,7 +79,6 @@ class Importer
     public function processImport($dataArray)
     {
         if ($this->_validateData($dataArray)) {
-
             $this->_importData();
         }
     }
