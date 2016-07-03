@@ -6,8 +6,8 @@ Usage
 -----
 You can call the import from your own Magento 2 code. Example:
 
-    /** @var \FireGento\FastSimpleImport2\Model\Importer $importerModel */
-    $importerModel = $this->objectManager->create('FireGento\FastSimpleImport2\Model\Importer');
+    /** @var \FireGento\FastSimpleImport\Model\Importer $importerModel */
+    $importerModel = $this->objectManager->create('FireGento\FastSimpleImport\Model\Importer');
 
     $productsArray = [
         [
@@ -56,8 +56,8 @@ Installation Instructions with Composer
 ---------------------------------------------
 
     composer config repositories.firegento_fastsimpleimport vcs https://github.com/firegento/FireGento_FastSimpleImport2
-    composer require firegento/fastsimpleimport2 dev-master
-    bin/magento module:enable FireGento_FastSimpleImport2
+    composer require firegento/fastsimpleimport dev-master
+    bin/magento module:enable FireGento_FastSimpleImport
     bin/magento setup:upgrade
     
     
