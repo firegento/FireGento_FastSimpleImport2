@@ -7,14 +7,14 @@
 -->
 <config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:module:Magento_Store:etc/config.xsd">
     <default>
-        <fastsimpleimport2>
+        <fastsimpleimport>
             <default>
                 <behavior>append</behavior>
                 <entity>catalog_product</entity>
                 <validation_strategy>validation-stop-on-errors</validation_strategy>
                 <allowed_error_count>10</allowed_error_count>
             </default>
-        </fastsimpleimport2>
+        </fastsimpleimport>
         <system>
             <media_storage_configuration>
                 <allowed_resources>

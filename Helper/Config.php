@@ -3,16 +3,16 @@
  * Copyright © 2016 FireGento e.V. - All rights reserved.
  * See LICENSE.md bundled with this module for license details.
  */
-namespace FireGento\FastSimpleImport2\Helper;
+namespace FireGento\FastSimpleImport\Helper;
 
 class Config extends \Magento\Framework\App\Helper\AbstractHelper
 {
 
-    const XML_PATH_BEHAVIOR         = 'fastsimpleimport2/default/behavior';
-    const XML_PATH_ENTITY           = 'fastsimpleimport2/default/entity';
-    const XML_PATH_VALIDATION_STRATEGY = 'fastsimpleimport2/default/validation_strategy';
-    const XML_PATH_ALLOWED_ERROR_COUNT = 'fastsimpleimport2/default/allowed_error_count';
-    const XML_PATH_IMPORT_IMAGES_FILE_FIR = 'fastsimpleimport2/default/import_images_file_dir';
+    const XML_PATH_BEHAVIOR         = 'fastsimpleimport/default/behavior';
+    const XML_PATH_ENTITY           = 'fastsimpleimport/default/entity';
+    const XML_PATH_VALIDATION_STRATEGY = 'fastsimpleimport/default/validation_strategy';
+    const XML_PATH_ALLOWED_ERROR_COUNT = 'fastsimpleimport/default/allowed_error_count';
+    const XML_PATH_IMPORT_IMAGES_FILE_FIR = 'fastsimpleimport/default/import_images_file_dir';
 
     /**
      * @param \Magento\Framework\App\Helper\Context $context
