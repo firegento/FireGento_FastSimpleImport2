@@ -3,8 +3,8 @@
  * Copyright © 2016 FireGento e.V. - All rights reserved.
  * See LICENSE.md bundled with this module for license details.
  */
-namespace FireGento\FastSimpleImport\Model;
-class ArrayAdapterFactory
+namespace FireGento\FastSimpleImport\Model\Adapters;
+class NestedArrayAdapterFactory implements ImportAdapterFactoryInterface
 {
     protected $_objectManager = null;
 
@@ -12,7 +12,7 @@ class ArrayAdapterFactory
 
     public function __construct(
         \Magento\Framework\ObjectManagerInterface $objectManager,
-        $instanceName = 'FireGento\FastSimpleImport\Model\ArrayAdapter'
+        $instanceName = 'FireGento\FastSimpleImport\Model\Adapters\NestedArrayAdapter'
     )
     {
         $this->_objectManager = $objectManager;
@@ -21,7 +21,7 @@ class ArrayAdapterFactory
 
     /**
      * @param array $data
-     * @return \FireGento\FastSimpleImport\Model\ArrayAdapter
+     * @return \FireGento\FastSimpleImport\Model\Adapters\ArrayAdapter
      */
     public function create(array $data = [])
     {
