@@ -1,0 +1,13 @@
+<?xml version="1.0"?>
+<!--
+  ~ /**
+  ~  * Copyright © Elias Kotlyar - All rights reserved.
+  ~  * See LICENSE.md bundled with this module for license details.
+  ~  */
+  -->
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:module:Magento_ImportExport:etc/import.xsd">
+    <entity name="catalog_category" label="Category" model="FireGento\FastSimpleImport\Model\Import\Category" behaviorModel="Magento\ImportExport\Model\Source\Import\Behavior\Basic" />
+
+    <!-- TODO: Watch for other Indexers -->
+    <relatedIndexer entity="catalog_product" name="catalog_category_flat" />
+</config>

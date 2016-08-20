@@ -3,7 +3,7 @@
  * Copyright © 2016 FireGento e.V. - All rights reserved.
  * See LICENSE.md bundled with this module for license details.
  */
-namespace FireGento\FastSimpleImport2\Model;
+namespace FireGento\FastSimpleImport\Model;
 class ArrayAdapter extends \Magento\ImportExport\Model\Import\AbstractSource
 {
     /**

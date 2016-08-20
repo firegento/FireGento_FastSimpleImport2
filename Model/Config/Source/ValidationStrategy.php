@@ -3,7 +3,7 @@
  * Copyright © 2015 Magento. All rights reserved.
  * See COPYING.txt for license details.
  */
-namespace FireGento\FastSimpleImport2\Model\Config\Source;
+namespace FireGento\FastSimpleImport\Model\Config\Source;
 use \Magento\ImportExport\Model\Import\ErrorProcessing\ProcessingErrorAggregatorInterface;
 class ValidationStrategy implements \Magento\Framework\Option\ArrayInterface
 {

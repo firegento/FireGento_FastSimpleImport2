@@ -3,11 +3,11 @@
  * Copyright © 2016 FireGento e.V. - All rights reserved.
  * See LICENSE.md bundled with this module for license details.
  */
-namespace FireGento\FastSimpleImport2\Model;
+namespace FireGento\FastSimpleImport\Model;
 class Importer
 {
     /**
-     * @var \FireGento\FastSimpleImport2\Helper\ImportError
+     * @var \FireGento\FastSimpleImport\Helper\ImportError
      */
     protected $errorHelper;
     /**
@@ -23,7 +23,7 @@ class Importer
      */
     protected $validationResult;
     /**
-     * @var \FireGento\FastSimpleImport2\Helper\Config
+     * @var \FireGento\FastSimpleImport\Helper\Config
      */
     protected $configHelper;
     /**
@@ -42,15 +42,15 @@ class Importer
     /**
      * Importer constructor.
      * @param \Magento\ImportExport\Model\Import $importModel
-     * @param \FireGento\FastSimpleImport2\Helper\ImportError $errorHelper
+     * @param \FireGento\FastSimpleImport\Helper\ImportError $errorHelper
      * @param ArrayAdapterFactory $arrayAdapterFactory
-     * @param \FireGento\FastSimpleImport2\Helper\Config $configHelper
+     * @param \FireGento\FastSimpleImport\Helper\Config $configHelper
      */
     public function __construct(
         \Magento\ImportExport\Model\ImportFactory $importModelFactory,
-        \FireGento\FastSimpleImport2\Helper\ImportError $errorHelper,
-        \FireGento\FastSimpleImport2\Model\ArrayAdapterFactory $arrayAdapterFactory,
-        \FireGento\FastSimpleImport2\Helper\Config $configHelper
+        \FireGento\FastSimpleImport\Helper\ImportError $errorHelper,
+        \FireGento\FastSimpleImport\Model\ArrayAdapterFactory $arrayAdapterFactory,
+        \FireGento\FastSimpleImport\Helper\Config $configHelper
     )
     {
 
