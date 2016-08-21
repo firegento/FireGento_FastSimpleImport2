@@ -10,62 +10,46 @@ namespace FireGento\FastSimpleImport\Model\Adapters;
 class NestedArrayAdapter extends ArrayAdapter
 {
     /**
-     * Initialize data and position; transferm multi arrays if activated
-     *
+     * ArrayAdapter constructor.
      * @param array $data
      */
     public function __construct($data)
     {
-        $numberLines = sizeof($data);
-        for ($lineNumber = 0; $lineNumber < $numberLines; $lineNumber++) {
-
-            $line = $data[$lineNumber];
-
-            $newLines = $this->_getNewLines($line);
-
-            foreach($newLines as $newLine) {
-                $newLine['fsi_line_number'] = $lineNumber;
-                $this->_array[] = $newLine;
-            }
-
-            unset($data[$lineNumber]);
+        parent::__construct($data);
+        foreach ($this->_array as &$row) {
+            foreach ($row as $colName => &$value)
+                if (is_array($value)) {
+                    $this->convertToArray($value);
+                }
         }
-
-        $this->_position = 0;
+        //print_r($this->_array);
 
     }
 
     /**
-     * Transform nested array to multi-line array (ImportExport format)
+     * Transform nested array to string
      *
      * @param array $line
      * @return array
      */
-    protected function _getNewLines($line)
+    protected function convertToArray(&$line)
     {
-        $newLines = array(
-            0 => $line
+        $implodeStr = ', ';
+        $arr = array_map(
+            function ($value, $key) use (&$implodeStr) {
+                if (is_array($value) && is_numeric($key)) {
+                    $this->convertToArray($value);
+                    $implodeStr = '|';
+                    return $value;
+                }
+                return sprintf("%s=%s", $key, $value);
+            },
+            $line,
+            array_keys($line)
         );
 
-        foreach ($line as $fieldName => $fieldValue) {
-            if (is_array($fieldValue)) {
-                $newLineNumber = 0;
-                foreach ($fieldValue as $singleFieldValue) {
-                    if ($newLineNumber > 0) {
-                        $newLines[$newLineNumber]['sku'] = null;
-                        $newLines[$newLineNumber]['_type'] = null;
-                        $newLines[$newLineNumber]['_attribute_set'] = null;
-
-                        $originalLineHasStoreScope = isset($line['_store']);
-                        if ($originalLineHasStoreScope) {
-                            $newLines[$newLineNumber]['_store'] = $line['_store'];
-                        }
-                    }
-                    $newLines[$newLineNumber++][$fieldName] = $singleFieldValue;
-                }
-            }
-        }
-
-        return $newLines;
+        $line = implode(
+            $implodeStr, $arr
+        );
     }
 }
