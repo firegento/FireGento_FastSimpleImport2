@@ -4,6 +4,9 @@
  * See LICENSE.md bundled with this module for license details.
  */
 namespace FireGento\FastSimpleImport\Model;
+
+use Magento\ImportExport\Model\Import;
+
 class Importer
 {
     /**
@@ -35,6 +38,11 @@ class Importer
      */
     protected $logTrace = "";
     /**
+     * default delimiter for several values in one cell as default for FIELD_FIELD_MULTIPLE_VALUE_SEPARATOR
+     * @var string
+     */
+    protected $multipleValueSeparator = Import::DEFAULT_GLOBAL_MULTI_VALUE_SEPARATOR;
+    /**
      * @var \Magento\ImportExport\Model\ImportFactory
      */
     private $importModelFactory;
@@ -64,7 +72,24 @@ class Importer
             'validation_strategy' => $this->configHelper->getValidationStrategy(),
             'allowed_error_count' => $this->configHelper->getAllowedErrorCount(),
             'import_images_file_dir' => $this->configHelper->getImportFileDir(),
+            '_import_multiple_value_separator' => $this->multipleValueSeparator
         ];
+    }
+
+    /**
+     * @return string
+     */
+    public function getMultipleValueSeparator()
+    {
+        return $this->multipleValueSeparator;
+    }
+
+    /**
+     * @param string $multipleValueSeparator
+     */
+    public function setMultipleValueSeparator($multipleValueSeparator)
+    {
+        $this->multipleValueSeparator = $multipleValueSeparator;
     }
 
     /**
