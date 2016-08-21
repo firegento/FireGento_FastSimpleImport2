@@ -15,9 +15,9 @@ class Importer
      */
     protected $errorMessages;
     /**
-     * @var ArrayAdapterFactory
+     * @var \FireGento\FastSimpleImport\Model\Adapters\ImportAdapterFactoryInterface
      */
-    protected $arrayAdapterFactory;
+    protected $importAdapterFactory;
     /**
      * @var
      */
@@ -27,10 +27,6 @@ class Importer
      */
     protected $configHelper;
     /**
-     * @var \Magento\ImportExport\Model\ImportFactory
-     */
-    private $importModelFactory;
-    /**
      * @var array
      */
     protected $settings;
@@ -38,24 +34,28 @@ class Importer
      * @var string
      */
     protected $logTrace = "";
+    /**
+     * @var \Magento\ImportExport\Model\ImportFactory
+     */
+    private $importModelFactory;
 
     /**
      * Importer constructor.
      * @param \Magento\ImportExport\Model\Import $importModel
      * @param \FireGento\FastSimpleImport\Helper\ImportError $errorHelper
-     * @param ArrayAdapterFactory $arrayAdapterFactory
+     * @param \FireGento\FastSimpleImport\Model\Adapters\ImportAdapterFactoryInterface $importAdapterFactory
      * @param \FireGento\FastSimpleImport\Helper\Config $configHelper
      */
     public function __construct(
         \Magento\ImportExport\Model\ImportFactory $importModelFactory,
         \FireGento\FastSimpleImport\Helper\ImportError $errorHelper,
-        \FireGento\FastSimpleImport\Model\ArrayAdapterFactory $arrayAdapterFactory,
+        \FireGento\FastSimpleImport\Model\Adapters\ImportAdapterFactoryInterface $importAdapterFactory,
         \FireGento\FastSimpleImport\Helper\Config $configHelper
     )
     {
 
         $this->errorHelper = $errorHelper;
-        $this->arrayAdapterFactory = $arrayAdapterFactory;
+        $this->importAdapterFactory = $importAdapterFactory;
         $this->configHelper = $configHelper;
         $this->importModelFactory = $importModelFactory;
         $this->settings = [
@@ -68,12 +68,19 @@ class Importer
     }
 
     /**
-     * @return \Magento\ImportExport\Model\Import
+     * @return Adapters\ImportAdapterFactoryInterface
      */
-    public function createImportModel(){
-        $importModel = $this->importModelFactory->create();
-        $importModel->setData($this->settings);
-        return $importModel;
+    public function getImportAdapterFactory()
+    {
+        return $this->importAdapterFactory;
+    }
+
+    /**
+     * @param Adapters\ImportAdapterFactoryInterface $importAdapterFactory
+     */
+    public function setImportAdapterFactory($importAdapterFactory)
+    {
+        $this->importAdapterFactory = $importAdapterFactory;
     }
 
     public function processImport($dataArray)
@@ -86,10 +93,25 @@ class Importer
     protected function _validateData($dataArray)
     {
         $importModel = $this->createImportModel();
-        $source = $this->arrayAdapterFactory->create(array('data' => $dataArray));
+        $source = $this->importAdapterFactory->create(array('data' => $dataArray));
         $this->validationResult = $importModel->validateSource($source);
         $this->addToLogTrace($importModel);
         return $this->validationResult;
+    }
+
+    /**
+     * @return \Magento\ImportExport\Model\Import
+     */
+    public function createImportModel()
+    {
+        $importModel = $this->importModelFactory->create();
+        $importModel->setData($this->settings);
+        return $importModel;
+    }
+
+    public function addToLogTrace($importModel)
+    {
+        $this->logTrace = $this->logTrace . $importModel->getFormatedLogTrace();
     }
 
     protected function _importData()
@@ -155,9 +177,6 @@ class Importer
         return $this->validationResult;
     }
 
-    public function addToLogTrace($importModel){
-        $this->logTrace = $this->logTrace.$importModel->getFormatedLogTrace();
-    }
     public function getLogTrace()
     {
         return $this->logTrace;

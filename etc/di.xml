@@ -1,0 +1,11 @@
+<?xml version="1.0"?>
+<!--
+/**
+ * Copyright © 2016 FireGento e.V. - All rights reserved.
+ * See LICENSE.md bundled with this module for license details.
+ */
+ -->
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:framework:ObjectManager/etc/config.xsd">
+    <preference for="\FireGento\FastSimpleImport\Model\Adapters\ImportAdapterFactoryInterface" type="FireGento\FastSimpleImport\Model\Adapters\ArrayAdapterFactory"/>
+
+</config>
