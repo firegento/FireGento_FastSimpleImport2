@@ -29,7 +29,7 @@ You can call the import from your own Magento 2 code. Example:
     print_r($importerModel->getLogTrace());
     print_r($importerModel->getErrorMessages());
 
-You can find more examples in our [demo module](https://github.com/magento-hackathon/FireGento_FastSimpleImport_Demo).
+You can find more examples in our [demo module](https://github.com/firegento/FireGento_FastSimpleImport2_Demo).
 We have implemented a few command line commands which demonstrate the usage of FastSimpleImport in a custom module.
         
 
@@ -53,6 +53,15 @@ FireGento Team
 * Twitter: [@firegento](https://twitter.com/firegento)
 
 Installation Instructions with Composer
+---------------------------------------------
+
+    composer require firegento/fastsimpleimport 
+    bin/magento module:enable FireGento_FastSimpleImport
+    bin/magento setup:upgrade
+    
+    
+
+Installation Instructions with Composer(Master Branch)
 ---------------------------------------------
 
     composer config repositories.firegento_fastsimpleimport vcs https://github.com/firegento/FireGento_FastSimpleImport2
