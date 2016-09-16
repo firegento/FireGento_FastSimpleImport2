@@ -93,7 +93,9 @@ class Category extends \Magento\ImportExport\Model\Import\AbstractEntity
      */
     protected $_indexValueAttributes = array(
         'default_sort_by',
-        'available_sort_by'
+        'available_sort_by',
+        'is_active',
+        'include_in_menu'
     );
 
 
