@@ -1,7 +1,7 @@
 Installation
 ==========================
 
-Installation Instructions with Composer
+Installation Instructions for latest stable Version
 ---------------------------------------------
 
     composer require firegento/fastsimpleimport 
@@ -10,7 +10,7 @@ Installation Instructions with Composer
     
     
 
-Installation Instructions with Composer(Master Branch)
+Installation Instructions for the latest development/contribution Version
 ---------------------------------------------
 
     composer config repositories.firegento_fastsimpleimport vcs https://github.com/firegento/FireGento_FastSimpleImport2

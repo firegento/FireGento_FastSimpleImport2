@@ -2,36 +2,11 @@ FireGento_FastSimpleImport
 ===================
 Wrapper for Magento 2 ImportExport functionality, which imports products and customers from arrays
 
-Usage
------
-You can call the import from your own Magento 2 code. Example:
 
-    /** @var \FireGento\FastSimpleImport\Model\Importer $importerModel */
-    $importerModel = $this->objectManager->create('FireGento\FastSimpleImport\Model\Importer');
+[Documentation](http://firegento-fastsimpleimport2.readthedocs.io/en/latest/)
+-------------------------------
 
-    $productsArray = [
-        [
-            'sku' => 'firegento-test',
-            'attribute_set_code' => 'Default',
-            'product_type' => 'simple',
-            'product_websites' => 'base',
-            'name' => 'FireGento Test Product',
-            'price' => '14.0000',
-        ],
-    ];
 
-    try {
-        $importerModel->processImport($productsArray);
-    } catch (\Exception $e) {
-        $output->writeln($e->getMessage());
-    }
-    
-    print_r($importerModel->getLogTrace());
-    print_r($importerModel->getErrorMessages());
-
-You can find more examples in our [demo module](https://github.com/firegento/FireGento_FastSimpleImport2_Demo).
-We have implemented a few command line commands which demonstrate the usage of FastSimpleImport in a custom module.
-        
 
 Requirements
 ------------
@@ -52,7 +27,7 @@ FireGento Team
 * Website: [http://firegento.com](http://firegento.com)
 * Twitter: [@firegento](https://twitter.com/firegento)
 
-Installation Instructions with Composer
+Quick Installation Guide
 ---------------------------------------------
 
     composer require firegento/fastsimpleimport 
@@ -60,14 +35,6 @@ Installation Instructions with Composer
     bin/magento setup:upgrade
     
     
-
-Installation Instructions with Composer(Master Branch)
----------------------------------------------
-
-    composer config repositories.firegento_fastsimpleimport vcs https://github.com/firegento/FireGento_FastSimpleImport2
-    composer require firegento/fastsimpleimport dev-master
-    bin/magento module:enable FireGento_FastSimpleImport
-    bin/magento setup:upgrade
     
     
 Licence
