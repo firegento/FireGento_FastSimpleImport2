@@ -238,6 +238,8 @@ class Category extends \Magento\ImportExport\Model\Import\AbstractEntity
      * @param \Magento\Catalog\Model\Category $defaultCategory
      * @param \Magento\Catalog\Model\ResourceModel\Category\Attribute\Collection $attributeCollection
      * @param \Magento\Catalog\Model\ResourceModel\Category\Collection $categoryCollection
+     * @param \Magento\Eav\Model\Config $eavConfig
+     * @param \Magento\Framework\Event\ManagerInterface $eventManager
      * @param array $data
      */
     public function __construct(
