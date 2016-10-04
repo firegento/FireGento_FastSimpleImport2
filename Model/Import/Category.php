@@ -1,14 +1,36 @@
 <?php
 namespace FireGento\FastSimpleImport\Model\Import;
 
-use Magento\Framework\Stdlib\DateTime;
+use Magento\Catalog\Api\Data\CategoryInterface;
 use Magento\ImportExport\Model\Import;
 use Magento\ImportExport\Model\Import\ErrorProcessing\ProcessingErrorAggregatorInterface;
+use Magento\Framework\EntityManager\MetadataPool;
+use Magento\Framework\EntityManager\Sequence\SequenceRegistry;
+use Magento\Staging\Model\VersionManager;
+use Magento\Staging\Model\ResourceModel\Db\ReadEntityVersion;
+use Magento\Framework\App\Filesystem\DirectoryList;
+use Magento\Framework\Model\ResourceModel\Db\TransactionManagerInterface;
+use Magento\Framework\Model\ResourceModel\Db\ObjectRelationProcessor;
+use Magento\Framework\Exception\LocalizedException;
+use Magento\Framework\Stdlib\DateTime;
+use Magento\Framework\Stdlib\StringUtils;
+use FireGento\FastSimpleImport\Model\Import\Proxy\Category\ResourceModelFactory as CategoryResourceModelFactory;
+use FireGento\FastSimpleImport\ResourceModel\Import\Category\StorageFactory;
+use Magento\Catalog\Model\Category as CategoryModel;
+use Magento\Catalog\Model\ResourceModel\Category\Attribute\Collection as CategoryAttributeCollection;
+use Magento\Catalog\Model\ResourceModel\Category\Collection as CategoryCollection;
+use Magento\Framework\App\Config\ScopeConfigInterface;
+use Magento\ImportExport\Model\ImportFactory;
+use Magento\ImportExport\Model\ResourceModel\Helper as ImportExportHelper;
+use Magento\Framework\App\ResourceConnection;
+use Magento\Store\Model\StoreManagerInterface;
+use Magento\Eav\Model\Config as EavConfig;
+use Magento\Framework\Event\ManagerInterface;
+use Magento\CatalogImportExport\Model\Import\UploaderFactory;
+use Magento\Framework\Filesystem;
 
 /**
  * Entity Adapter for importing Magento Categories
- *
- *
  */
 class Category extends \Magento\ImportExport\Model\Import\AbstractEntity
 {
@@ -61,42 +83,42 @@ class Category extends \Magento\ImportExport\Model\Import\AbstractEntity
     /**
      * Category attributes parameters.
      *
-     *  [attr_code_1] => array(
-     *      'options' => array(),
+     *  [attr_code_1] => [
+     *      'options' => [],
      *      'type' => 'text', 'price', 'textarea', 'select', etc.
      *      'id' => ..
-     *  ),
+     *  ],
      *  ...
      *
      * @var array
      */
-    protected $_attributes = array();
+    protected $attributes = [];
 
     /**
      * Categories text-path to ID hash with roots checking.
      *
      * @var array
      */
-    protected $_categoriesWithRoots = array();
+    protected $categoriesWithRoots = [];
 
     /**
      * Category entity DB table name.
      *
      * @var string
      */
-    protected $_entityTable;
+    protected $entityTable;
 
     /**
      * Attributes with index (not label) value.
      *
      * @var array
      */
-    protected $_indexValueAttributes = array(
+    protected $indexValueAttributes = [
         'default_sort_by',
         'available_sort_by',
         'is_active',
         'include_in_menu'
-    );
+    ];
 
 
     /**
@@ -104,7 +126,7 @@ class Category extends \Magento\ImportExport\Model\Import\AbstractEntity
      *
      * @var array
      */
-    protected $_messageTemplates = array(
+    protected $messageTemplates = [
         self::ERROR_INVALID_SCOPE => 'Invalid value in Scope column',
         self::ERROR_INVALID_WEBSITE => 'Invalid value in Website column (website does not exists?)',
         self::ERROR_INVALID_STORE => 'Invalid value in Store column (store does not exists?)',
@@ -117,148 +139,230 @@ class Category extends \Magento\ImportExport\Model\Import\AbstractEntity
         self::ERROR_ROW_IS_ORPHAN => 'Orphan rows that will be skipped due default row errors',
         self::ERROR_VALUE_IS_REQUIRED => 'Required attribute \'%s\' has an empty value',
         self::ERROR_CATEGORY_NOT_FOUND_FOR_DELETE => 'Category not found for delete'
-    );
+    ];
 
     /**
      * Column names that holds images files names
      *
      * @var array
      */
-    protected $_imagesArrayKeys = array(
+    protected $imagesArrayKeys = [
         'thumbnail', 'image'
-    );
+    ];
 
-    protected $_newCategory = array();
+    protected $newCategory = [];
 
     /**
      * Column names that holds values with particular meaning.
      *
      * @var array
      */
-    protected $_specialAttributes = array(
+    protected $_specialAttributes = [
         self::COL_STORE, self::COL_ROOT, self::COL_CATEGORY
-    );
+    ];
 
     /**
      * Permanent entity columns.
      *
      * @var array
      */
-    protected $_permanentAttributes= array(
+    protected $_permanentAttributes= [
         self::COL_ROOT, self::COL_CATEGORY
-    );
+    ];
+
+    /**
+     * @var int
+     */
+    protected $errorsLimit;
+
+    /**
+     * @var array
+     */
+    protected $invalidRows = [];
 
     /**
      * All stores code-ID pairs.
      *
      * @var array
      */
-    protected $_storeCodeToId = array();
+    protected $storeCodeToId = [];
 
     /**
      * Store ID to its website stores IDs.
      *
      * @var array
      */
-    protected $_storeIdToWebsiteStoreIds = array();
+    protected $storeIdToWebsiteStoreIds = [];
 
     /**
      * Website code-to-ID
      *
      * @var array
      */
-    protected $_websiteCodeToId = array();
+    protected $websiteCodeToId = [];
 
     /**
      * Website code to store code-to-ID pairs which it consists.
      *
      * @var array
      */
-    protected $_websiteCodeToStoreIds = array();
+    protected $websiteCodeToStoreIds = [];
 
     /**
      * Media files uploader
      *
      * @var \Magento\CatalogImportExport\Model\Import\Uploader
      */
-    protected $_fileUploader;
+    protected $fileUploader;
+
+    /**
+     * @var \Magento\Framework\Filesystem\Directory\WriteInterface
+     */
+    protected $mediaDirectory;
 
     /** @var bool */
-    protected $_ignoreDuplicates = false;
-
-    /** @var bool */
-    protected $_unsetEmptyFields = false;
+    protected $unsetEmptyFields = false;
 
     /** @var bool|string */
-    protected $_symbolEmptyFields = false;
+    protected $symbolEmptyFields = false;
 
     /** @var bool|string */
-    protected $_symbolIgnoreFields = false;
+    protected $symbolIgnoreFields = false;
 
-    protected $_defaultAttributeSetId = 0;
+    protected $defaultAttributeSetId = 0;
+    
     /**
      * @var \Magento\Store\Model\StoreManagerInterface
      */
-    private $_storeManager;
+    protected $storeManager;
+    
     /**
      * @var \FireGento\FastSimpleImport\ResourceModel\Import\Category\StorageFactory
      */
-    private $_storageFactory;
+    protected $storageFactory;
+    
     /**
      * @var \Magento\Catalog\Model\Category
      */
-    private $_defaultCategory;
+    protected $defaultCategory;
+    
     /**
      * @var \Magento\Catalog\Model\ResourceModel\Category\Attribute\Collection
      */
-    private $_attributeCollection;
+    protected $attributeCollection;
+    
     /**
      * @var \Magento\Catalog\Model\ResourceModel\Category\Collection
      */
-    private $_categoryCollection;
+    protected $categoryCollection;
+    
     /**
      * @var \Magento\ImportExport\Model\ResourceModel\Helper
      */
-    private $resourceHelper;
+    protected $resourceHelper;
+    
     /**
-     * @var \Magento\Framework\Event\ManagerInterface
+     * @var ManagerInterface
      */
-    private $_eventManager;
+    protected $eventManager;
+
+    /**
+     * @var UploaderFactory
+     */
+    protected $uploaderFactory;
+
+    /**
+     * @var MetadataPool
+     */
+    protected $metadataPool;
+
+    /**
+     * @var SequenceRegistry
+     */
+    protected $sequenceRegistry;
+
+    /**
+     * @var VersionManager
+     */
+    protected $versionManager;
+
+    /**
+     * @var ReadEntityVersion
+     */
+    protected $entityVersion;
+
+    /**
+     * @var ObjectRelationProcessor
+     */
+    protected $objectRelationProcessor;
+
+    /**
+     * @var TransactionManagerInterface
+     */
+    protected $transactionManager;
+
+    /**
+     * @var CategoryResourceModelFactory
+     */
+    protected $resourceFactory;
+
+    /**
+     * @var string|null
+     */
+    protected $entityTypeId;
 
     /**
      * Category constructor.
-     * @param \Magento\Framework\Stdlib\StringUtils $string
-     * @param \Magento\Framework\App\Config\ScopeConfigInterface $scopeConfig
-     * @param \Magento\ImportExport\Model\ImportFactory $importFactory
-     * @param \Magento\ImportExport\Model\ResourceModel\Helper $resourceHelper
-     * @param \Magento\Framework\App\ResourceConnection $resource
+     *
+     * @param StringUtils $string
+     * @param ScopeConfigInterface $scopeConfig
+     * @param ImportFactory $importFactory
+     * @param ImportExportHelper $resourceHelper
+     * @param ResourceConnection $resource
      * @param ProcessingErrorAggregatorInterface $errorAggregator
-     * @param \Magento\Store\Model\StoreManagerInterface $storeManager
-     * @param \FireGento\FastSimpleImport\ResourceModel\Import\Category\StorageFactory $storageFactory
-     * @param \Magento\Catalog\Model\Category $defaultCategory
-     * @param \Magento\Catalog\Model\ResourceModel\Category\Attribute\Collection $attributeCollection
-     * @param \Magento\Catalog\Model\ResourceModel\Category\Collection $categoryCollection
-     * @param \Magento\Eav\Model\Config $eavConfig
-     * @param \Magento\Framework\Event\ManagerInterface $eventManager
+     * @param StoreManagerInterface $storeManager
+     * @param StorageFactory $storageFactory
+     * @param CategoryModel $defaultCategory
+     * @param CategoryAttributeCollection $attributeCollection
+     * @param CategoryCollection $categoryCollection
+     * @param EavConfig $eavConfig
+     * @param ManagerInterface $eventManager
+     * @param UploaderFactory $imageUploaderFactory
+     * @param Filesystem $filesystem
+     * @param MetadataPool $metadataPool
+     * @param SequenceRegistry $sequenceRegistry
+     * @param VersionManager $versionManager
+     * @param ReadEntityVersion $entityVersion
+     * @param ObjectRelationProcessor $objectRelationProcessor
+     * @param TransactionManagerInterface $transactionManager
+     * @param CategoryResourceModelFactory $resourceFactory
      * @param array $data
      */
     public function __construct(
-        \Magento\Framework\Stdlib\StringUtils $string,
-        \Magento\Framework\App\Config\ScopeConfigInterface $scopeConfig,
-        \Magento\ImportExport\Model\ImportFactory $importFactory,
-        \Magento\ImportExport\Model\ResourceModel\Helper $resourceHelper,
-        \Magento\Framework\App\ResourceConnection $resource,
+        StringUtils $string,
+        ScopeConfigInterface $scopeConfig,
+        ImportFactory $importFactory,
+        ImportExportHelper $resourceHelper,
+        ResourceConnection $resource,
         ProcessingErrorAggregatorInterface $errorAggregator,
-        \Magento\Store\Model\StoreManagerInterface $storeManager,
-        \FireGento\FastSimpleImport\ResourceModel\Import\Category\StorageFactory $storageFactory,
-        \Magento\Catalog\Model\Category $defaultCategory,
-        \Magento\Catalog\Model\ResourceModel\Category\Attribute\Collection $attributeCollection,
-        \Magento\Catalog\Model\ResourceModel\Category\Collection $categoryCollection,
-        \Magento\Eav\Model\Config $eavConfig,
-        \Magento\Framework\Event\ManagerInterface $eventManager,
+        StoreManagerInterface $storeManager,
+        StorageFactory $storageFactory,
+        CategoryModel $defaultCategory,
+        CategoryAttributeCollection $attributeCollection,
+        CategoryCollection $categoryCollection,
+        EavConfig $eavConfig,
+        ManagerInterface $eventManager,
+        UploaderFactory $imageUploaderFactory,
+        Filesystem $filesystem,
+        MetadataPool $metadataPool,
+        SequenceRegistry $sequenceRegistry,
+        VersionManager $versionManager,
+        ReadEntityVersion $entityVersion,
+        ObjectRelationProcessor $objectRelationProcessor,
+        TransactionManagerInterface $transactionManager,
+        CategoryResourceModelFactory $resourceFactory,
         array $data = []
-    )
-    {
+    ) {
         parent::__construct(
             $string,
             $scopeConfig,
@@ -269,45 +373,48 @@ class Category extends \Magento\ImportExport\Model\Import\AbstractEntity
             $data
         );
 
-
-        $this->_storeManager = $storeManager;
-        $this->_storageFactory = $storageFactory;
-        $this->_defaultCategory = $defaultCategory;
-        $this->_attributeCollection = $attributeCollection;
-        $this->_categoryCollection = $categoryCollection;
         $this->resourceHelper = $resourceHelper;
+        $this->storeManager = $storeManager;
+        $this->storageFactory = $storageFactory;
+        $this->defaultCategory = $defaultCategory;
+        $this->attributeCollection = $attributeCollection;
+        $this->categoryCollection = $categoryCollection;
+        $this->eventManager = $eventManager;
+        $this->uploaderFactory = $imageUploaderFactory;
+
+        $this->mediaDirectory = $filesystem->getDirectoryWrite(DirectoryList::ROOT);
+        $this->metadataPool = $metadataPool;
+        $this->sequenceRegistry = $sequenceRegistry;
+        $this->versionManager = $versionManager;
+        $this->entityVersion = $entityVersion;
+        $this->objectRelationProcessor = $objectRelationProcessor;
+        $this->transactionManager = $transactionManager;
+        $this->resourceFactory = $resourceFactory;
 
         $entityType = $eavConfig->getEntityType($this->getEntityTypeCode());
-        $this->_entityTypeId = $entityType->getEntityTypeId();
+        $this->entityTypeId = $entityType->getEntityTypeId();
 
-        foreach ($this->_messageTemplates as $errorCode => $message) {
+        foreach ($this->messageTemplates as $errorCode => $message) {
             $this->getErrorAggregator()->addErrorMessageTemplate($errorCode, $message);
         }
-
-
-        $this
-            ->_initOnTabAttributes()
-            ->_initWebsites()
-            ->_initStores()
-            ->_initCategories()
-            ->_initAttributes()
-            ->_initAttributeSetId();
-
-
-
-        $this->_entityTable = $this->_defaultCategory->getResource()->getEntityTable();
-
-
-        $this->_eventManager = $eventManager;
+        
+        $this->initOnTabAttributes()
+            ->initWebsites()
+            ->initStores()
+            ->initCategories()
+            ->initAttributes()
+            ->initAttributeSetId();
+        
+        $this->entityTable = $this->defaultCategory->getResource()->getEntityTable();
     }
 
     /**
      * Initialize the default attribute_set_id
      * @return $this
      */
-    protected function _initAttributeSetId()
+    protected function initAttributeSetId()
     {
-        $this->_defaultAttributeSetId = $this->_defaultCategory->getDefaultAttributeSetId();
+        $this->defaultAttributeSetId = $this->defaultCategory->getDefaultAttributeSetId();
         return $this;
     }
 
@@ -316,21 +423,21 @@ class Category extends \Magento\ImportExport\Model\Import\AbstractEntity
      *
      * @return $this
      */
-    protected function _initAttributes()
+    protected function initAttributes()
     {
 
 
-        foreach ($this->_attributeCollection as $attribute) {
+        foreach ($this->attributeCollection as $attribute) {
 
-            $this->_attributes[$attribute->getAttributeCode()] = array(
+            $this->attributes[$attribute->getAttributeCode()] = [
                 'id' => $attribute->getId(),
                 'is_required' => $attribute->getIsRequired(),
                 'is_static' => $attribute->isStatic(),
                 'rules' => $attribute->getValidateRules() ? unserialize($attribute->getValidateRules()) : null,
-                'type' => \Magento\ImportExport\Model\Import::getAttributeType($attribute),
+                'type' => Import::getAttributeType($attribute),
                 'options' => $this->getAttributeOptions($attribute),
                 'attribute' => $attribute
-            );
+            ];
         }
 
         return $this;
@@ -341,37 +448,40 @@ class Category extends \Magento\ImportExport\Model\Import\AbstractEntity
      *
      * @return $this
      */
-    protected function _initCategories()
+    protected function initCategories()
     {
 
-        $collection = $this->_categoryCollection->addNameToResult();
+        $collection = $this->categoryCollection->addNameToResult();
 
+        /** @var \Magento\Catalog\Model\Category $category */
         foreach ($collection as $category) {
 
             $structure = explode('/', $category->getPath());
             $pathSize  = count($structure);
             if ($pathSize > 1) {
-                $path = array();
+                $path = [];
                 for ($i = 1; $i < $pathSize; $i++) {
-                    $path[] = $collection->getItemById($structure[$i])->getName();
+                    /** @var \Magento\Catalog\Model\Category $c */
+                    $c = $collection->getItemById($structure[$i]);
+                    $path[] = $c->getName();
                 }
                 $rootCategoryName = array_shift($path);
-                if (!isset($this->_categoriesWithRoots[$rootCategoryName])) {
-                    $this->_categoriesWithRoots[$rootCategoryName] = array();
+                if (!isset($this->categoriesWithRoots[$rootCategoryName])) {
+                    $this->categoriesWithRoots[$rootCategoryName] = [];
                 }
                 $index = $this->_implodeEscaped('/', $path);
-                $this->_categoriesWithRoots[$rootCategoryName][$index] = array(
+                $this->categoriesWithRoots[$rootCategoryName][$index] = [
                     'entity_id' => $category->getId(),
                     'path' => $category->getPath(),
                     'level' => $category->getLevel(),
                     'position' => $category->getPosition()
-                );
+                ];
                 //allow importing by ids.
-                if (!isset($this->_categoriesWithRoots[$structure[1]])) {
-                    $this->_categoriesWithRoots[$structure[1]] = array();
+                if (!isset($this->categoriesWithRoots[$structure[1]])) {
+                    $this->categoriesWithRoots[$structure[1]] = [];
                 }
-                $this->_categoriesWithRoots[$structure[1]][$category->getId()] =
-                    $this->_categoriesWithRoots[$rootCategoryName][$index];
+                $this->categoriesWithRoots[$structure[1]][$category->getId()] =
+                    $this->categoriesWithRoots[$rootCategoryName][$index];
             }
         }
         return $this;
@@ -384,11 +494,11 @@ class Category extends \Magento\ImportExport\Model\Import\AbstractEntity
      * @param bool $withDefault
      * @return $this
      */
-    protected function _initStores($withDefault = false)
+    protected function initStores($withDefault = false)
     {
         /** @var $store \Magento\Store\Model\Store */
-        foreach ($this->_storeManager->getStores($withDefault) as $store) {
-            $this->_storeCodeToId[$store->getCode()] = $store->getId();
+        foreach ($this->storeManager->getStores($withDefault) as $store) {
+            $this->storeCodeToId[$store->getCode()] = $store->getId();
         }
         return $this;
     }
@@ -396,13 +506,14 @@ class Category extends \Magento\ImportExport\Model\Import\AbstractEntity
     /**
      * Initialize website values.
      *
+     * @param bool $withDefault
      * @return $this
      */
-    protected function _initWebsites($withDefault = false)
+    protected function initWebsites($withDefault = false)
     {
         /** @var $website \Magento\Store\Model\Website */
-        foreach ($this->_storeManager->getWebsites($withDefault) as $website) {
-            $this->_websiteCodeToId[$website->getCode()] = $website->getId();
+        foreach ($this->storeManager->getWebsites($withDefault) as $website) {
+            $this->websiteCodeToId[$website->getCode()] = $website->getId();
         }
         return $this;
     }
@@ -410,9 +521,8 @@ class Category extends \Magento\ImportExport\Model\Import\AbstractEntity
     /**
      * @return $this
      */
-    protected function _initOnTabAttributes()
+    protected function initOnTabAttributes()
     {
-
         // TODO: If the OnTap Merchandiser Exists, add Code here:
         return $this;
     }
@@ -423,7 +533,7 @@ class Category extends \Magento\ImportExport\Model\Import\AbstractEntity
      */
     public function setUnsetEmptyFields($value)
     {
-        $this->_unsetEmptyFields = (boolean)$value;
+        $this->unsetEmptyFields = (boolean)$value;
         return $this;
     }
 
@@ -433,7 +543,7 @@ class Category extends \Magento\ImportExport\Model\Import\AbstractEntity
      */
     public function setSymbolEmptyFields($value)
     {
-        $this->_symbolEmptyFields = $value;
+        $this->symbolEmptyFields = $value;
         return $this;
     }
 
@@ -443,26 +553,37 @@ class Category extends \Magento\ImportExport\Model\Import\AbstractEntity
      */
     public function setSymbolIgnoreFields($value)
     {
-        $this->_symbolIgnoreFields = $value;
+        $this->symbolIgnoreFields = $value;
         return $this;
     }
 
     /**
      * Set the error limit when the importer will stop
+     *
      * @param $limit
      */
     public function setErrorLimit($limit)
     {
         if ($limit) {
-            $this->_errorsLimit = $limit;
+            $this->errorsLimit = $limit;
         } else {
-            $this->_errorsLimit = 100;
+            $this->errorsLimit = 100;
         }
+    }
+
+    /**
+     * Set the error limit when the importer will stop
+     *
+     * @return int
+     */
+    public function getErrorLimit()
+    {
+        return (int) $this->errorsLimit;
     }
 
     public function getCategoriesWithRoots()
     {
-        return $this->_categoriesWithRoots;
+        return $this->categoriesWithRoots;
     }
 
     /**
@@ -483,7 +604,7 @@ class Category extends \Magento\ImportExport\Model\Import\AbstractEntity
      */
     public function getEntityTypeCode()
     {
-        return 'catalog_category';
+        return CategoryModel::ENTITY;
     }
 
     /**
@@ -503,7 +624,7 @@ class Category extends \Magento\ImportExport\Model\Import\AbstractEntity
      */
     public function getWebsiteCodes()
     {
-        return $this->_websiteCodeToId;
+        return $this->websiteCodeToId;
     }
 
     /**
@@ -513,17 +634,17 @@ class Category extends \Magento\ImportExport\Model\Import\AbstractEntity
      */
     public function getAffectedEntityIds()
     {
-        $categoryIds = array();
+        $categoryIds = [];
         while ($bunch = $this->_dataSourceModel->getNextBunch()) {
             foreach ($bunch as $rowNum => $rowData) {
-                $this->_filterRowData($rowData);
+                $this->filterRowData($rowData);
                 if (!$this->isRowAllowedToImport($rowData, $rowNum)) {
                     continue;
                 }
-                if (!isset($this->_newCategory[$rowData[self::COL_ROOT]][$rowData[self::COL_CATEGORY]]['entity_id'])) {
+                if (!isset($this->newCategory[$rowData[self::COL_ROOT]][$rowData[self::COL_CATEGORY]]['entity_id'])) {
                     continue;
                 }
-                $categoryIds[] = $this->_newCategory[$rowData[self::COL_ROOT]][$rowData[self::COL_CATEGORY]]['entity_id'];
+                $categoryIds[] = $this->newCategory[$rowData[self::COL_ROOT]][$rowData[self::COL_CATEGORY]]['entity_id'];
             }
         }
         return $categoryIds;
@@ -536,15 +657,15 @@ class Category extends \Magento\ImportExport\Model\Import\AbstractEntity
      *
      * @param array $rowData
      */
-    protected function _filterRowData(&$rowData)
+    protected function filterRowData(&$rowData)
     {
-        if ($this->_unsetEmptyFields || $this->_symbolEmptyFields || $this->_symbolIgnoreFields) {
+        if ($this->unsetEmptyFields || $this->symbolEmptyFields || $this->symbolIgnoreFields) {
             foreach ($rowData as $key => $fieldValue) {
-                if ($this->_unsetEmptyFields && !strlen($fieldValue)) {
+                if ($this->unsetEmptyFields && !strlen($fieldValue)) {
                     unset($rowData[$key]);
-                } else if ($this->_symbolEmptyFields && trim($fieldValue) == $this->_symbolEmptyFields) {
+                } else if ($this->symbolEmptyFields && trim($fieldValue) == $this->symbolEmptyFields) {
                     $rowData[$key] = NULL;
-                } else if ($this->_symbolIgnoreFields && trim($fieldValue) == $this->_symbolIgnoreFields) {
+                } else if ($this->symbolIgnoreFields && trim($fieldValue) == $this->symbolIgnoreFields) {
                     unset($rowData[$key]);
                 }
             }
@@ -555,7 +676,7 @@ class Category extends \Magento\ImportExport\Model\Import\AbstractEntity
      * Source model setter.
      *
      * @param array $source
-     * @return \Magento\ImportExport\Model\Import\Entity\AbstractEntity
+     * @return $this
      */
     public function setArraySource($source)
     {
@@ -575,6 +696,7 @@ class Category extends \Magento\ImportExport\Model\Import\AbstractEntity
         $this->_parameters['behavior'] = $behavior;
     }
 
+
     /**
      * Partially reindex newly created and updated products
      *
@@ -584,12 +706,12 @@ class Category extends \Magento\ImportExport\Model\Import\AbstractEntity
     {
         switch ($this->getBehavior()) {
             case Import::BEHAVIOR_DELETE:
-                $this->_indexDeleteEvents();
+                $this->indexDeleteEvents();
                 break;
             case Import::BEHAVIOR_REPLACE:
             case Import::BEHAVIOR_APPEND:
 
-                $this->_reindexUpdatedCategories();
+                $this->reindexUpdatedCategories();
                 break;
         }
         return $this;
@@ -600,9 +722,9 @@ class Category extends \Magento\ImportExport\Model\Import\AbstractEntity
      * @throws \Exception
      * @return $this
      */
-    protected function _indexDeleteEvents()
+    protected function indexDeleteEvents()
     {
-        return $this->_reindexUpdatedCategories();
+        return $this->reindexUpdatedCategories();
     }
 
     /**
@@ -610,7 +732,7 @@ class Category extends \Magento\ImportExport\Model\Import\AbstractEntity
      * @return $this
      * @throws \Exception
      */
-    protected function _reindexUpdatedCategories()
+    protected function reindexUpdatedCategories()
     {
         // Reindexing hopefully not needed in Magento2
         return $this;
@@ -622,17 +744,19 @@ class Category extends \Magento\ImportExport\Model\Import\AbstractEntity
     }
 
     /**
-     * @param $sku
+     * @param string $root
+     * @param string $category
+     *
      * @return array|false
      */
     public function getEntityByCategory($root, $category)
     {
-        if (isset($this->_categoriesWithRoots[$root][$category])) {
-            return $this->_categoriesWithRoots[$root][$category];
+        if (isset($this->categoriesWithRoots[$root][$category])) {
+            return $this->categoriesWithRoots[$root][$category];
         }
 
-        if (isset($this->_newCategory[$root][$category])) {
-            return $this->_newCategory[$root][$category];
+        if (isset($this->newCategory[$root][$category])) {
+            return $this->newCategory[$root][$category];
         }
 
         return false;
@@ -647,32 +771,34 @@ class Category extends \Magento\ImportExport\Model\Import\AbstractEntity
     protected function _importData()
     {
         if (Import::BEHAVIOR_DELETE == $this->getBehavior()) {
-            $this->_deleteCategories();
+            $this->deleteCategories();
         } else {
-            $this->_saveCategories();
-            $this->_saveOnTab();
+            $this->saveCategories();
+            $this->saveOnTab();
         }
-        $this->_eventManager->dispatch('catalog_product_import_finish_before', ['adapter' => $this]);
+
+        $this->eventManager->dispatch('catalog_product_import_finish_before', ['adapter' => $this]);
+
         return true;
     }
 
     /**
-     * Delete products.
-     *
+     * Delete categories.
+     * 
      * @return $this
      * @throws \Exception
      */
-    protected function _deleteCategories()
+    protected function deleteCategories()
     {
-        $productEntityTable = $this->_resourceFactory->create()->getEntityTable();
+        $productEntityTable = $this->resourceFactory->create()->getEntityTable();
 
         while ($bunch = $this->_dataSourceModel->getNextBunch()) {
             $idToDelete = [];
 
             foreach ($bunch as $rowNum => $rowData) {
-                $this->_filterRowData($rowData);
+                $this->filterRowData($rowData);
                 if ($this->validateRow($rowData, $rowNum) && self::SCOPE_DEFAULT == $this->getRowScope($rowData)) {
-                    $idToDelete[] = $this->_categoriesWithRoots[$rowData[self::COL_ROOT]][$rowData[self::COL_CATEGORY]]['entity_id'];
+                    $idToDelete[] = $this->categoriesWithRoots[$rowData[self::COL_ROOT]][$rowData[self::COL_CATEGORY]]['entity_id'];
                 }
             }
             if ($idToDelete) {
@@ -691,9 +817,10 @@ class Category extends \Magento\ImportExport\Model\Import\AbstractEntity
                     $this->transactionManager->rollBack();
                     throw $e;
                 }
-                $this->_eventManager->dispatch('catalog_product_import_bunch_delete_after', ['adapter' => $this, 'bunch' => $bunch]);
+                $this->eventManager->dispatch('catalog_product_import_bunch_delete_after', ['adapter' => $this, 'bunch' => $bunch]);
             }
         }
+        
         return $this;
     }
 
@@ -706,19 +833,17 @@ class Category extends \Magento\ImportExport\Model\Import\AbstractEntity
      */
     public function validateRow(array $rowData, $rowNum)
     {
-
-
         static $root = null;
         static $category = null;
 
         if (isset($rowData['fsi_line_number'])) {
             $rowNum = $rowData['fsi_line_number'];
         }
-        $this->_filterRowData($rowData);
+        $this->filterRowData($rowData);
 
         // check if row is already validated
         if (isset($this->_validatedRows[$rowNum])) {
-            return !isset($this->_invalidRows[$rowNum]);
+            return !isset($this->invalidRows[$rowNum]);
         }
         $this->_validatedRows[$rowNum] = true;
 
@@ -726,7 +851,7 @@ class Category extends \Magento\ImportExport\Model\Import\AbstractEntity
         //check for duplicates
         if (isset($rowData[self::COL_ROOT])
             && isset($rowData[self::COL_CATEGORY])
-            && isset($this->_newCategory[$rowData[self::COL_ROOT]][$rowData[self::COL_CATEGORY]])
+            && isset($this->newCategory[$rowData[self::COL_ROOT]][$rowData[self::COL_CATEGORY]])
         ) {
             if (!$this->getIgnoreDuplicates()) {
                 $this->addRowError(self::ERROR_DUPLICATE_CATEGORY, $rowNum);
@@ -739,7 +864,7 @@ class Category extends \Magento\ImportExport\Model\Import\AbstractEntity
         // BEHAVIOR_DELETE use specific validation logic
         if (Import::BEHAVIOR_DELETE == $this->getBehavior()) {
             if (self::SCOPE_DEFAULT == $rowScope
-                && !isset($this->_categoriesWithRoots[$rowData[self::COL_ROOT]][$rowData[self::COL_CATEGORY]])
+                && !isset($this->categoriesWithRoots[$rowData[self::COL_ROOT]][$rowData[self::COL_CATEGORY]])
             ) {
                 $this->addRowError(self::ERROR_CATEGORY_NOT_FOUND_FOR_DELETE, $rowNum);
                 return false;
@@ -749,7 +874,7 @@ class Category extends \Magento\ImportExport\Model\Import\AbstractEntity
 
         // common validation
         if (self::SCOPE_DEFAULT == $rowScope) { // category is specified, row is SCOPE_DEFAULT, new category block begins
-            $rowData['name'] = $this->_getCategoryName($rowData);
+            $rowData['name'] = $this->getCategoryName($rowData);
 
             $this->_processedEntitiesCount++;
 
@@ -757,37 +882,35 @@ class Category extends \Magento\ImportExport\Model\Import\AbstractEntity
             $category = $rowData[self::COL_CATEGORY];
 
             //check if the root exists
-            if (!isset($this->_categoriesWithRoots[$root])) {
+            if (!isset($this->categoriesWithRoots[$root])) {
                 $this->addRowError(self::ERROR_INVALID_ROOT, $rowNum);
                 return false;
             }
 
             //check if parent category exists
-            if ($this->_getParentCategory($rowData) === false) {
+            if ($this->getParentCategory($rowData) === false) {
 
                 $this->addRowError(self::ERROR_PARENT_NOT_FOUND, $rowNum);
                 return false;
             }
 
-            if (isset($this->_categoriesWithRoots[$root][$category])) {
+            if (isset($this->categoriesWithRoots[$root][$category])) {
 
             } else { // validate new category type and attribute set
-                if (!isset($this->_newCategory[$root][$category])) {
-                    $this->_newCategory[$root][$category] = array(
-                        'entity_id' => null,
-                    );
+                if (!isset($this->newCategory[$root][$category])) {
+                    $this->newCategory[$root][$category] = ['entity_id' => null];
                 }
-                if (isset($this->_invalidRows[$rowNum])) {
+                if (isset($this->invalidRows[$rowNum])) {
                     // mark SCOPE_DEFAULT row as invalid for future child rows if category not in DB already
                     $category = false;
                 }
             }
 
             // check simple attributes
-            foreach ($this->_attributes as $attrCode => $attrParams) {
+            foreach ($this->attributes as $attrCode => $attrParams) {
                 if (isset($rowData[$attrCode]) && strlen($rowData[$attrCode])) {
                     $this->isAttributeValid($attrCode, $attrParams, $rowData, $rowNum);
-                } elseif ($attrParams['is_required'] && !isset($this->_categoriesWithRoots[$root][$category])) {
+                } elseif ($attrParams['is_required'] && !isset($this->categoriesWithRoots[$root][$category])) {
                     $this->addRowError(self::ERROR_VALUE_IS_REQUIRED, $rowNum, $attrCode);
                 }
             }
@@ -797,27 +920,33 @@ class Category extends \Magento\ImportExport\Model\Import\AbstractEntity
                 $this->addRowError(self::ERROR_CATEGORY_IS_EMPTY, $rowNum);
             } elseif (false === $category) {
                 $this->addRowError(self::ERROR_ROW_IS_ORPHAN, $rowNum);
-            } elseif (self::SCOPE_STORE == $rowScope && !isset($this->_storeCodeToId[$rowData[self::COL_STORE]])) {
+            } elseif (self::SCOPE_STORE == $rowScope && !isset($this->storeCodeToId[$rowData[self::COL_STORE]])) {
                 $this->addRowError(self::ERROR_INVALID_STORE, $rowNum);
             }
         }
 
-        if (isset($this->_invalidRows[$rowNum])) {
+        if (isset($this->invalidRows[$rowNum])) {
             $category = false; // mark row as invalid for next address rows
         }
 
 
-        return !isset($this->_invalidRows[$rowNum]);
+        return !isset($this->invalidRows[$rowNum]);
     }
 
+    /**
+     * @return bool
+     */
     public function getIgnoreDuplicates()
     {
-        return $this->_ignoreDuplicates;
+        return (boolean) $this->_parameters['ignore_duplicates'];
     }
 
-    public function setIgnoreDuplicates($ignore)
+    /**
+     * @param boolean|int $value
+     */
+    public function setIgnoreDuplicates($value)
     {
-        $this->_ignoreDuplicates = (boolean)$ignore;
+        $this->_parameters['ignore_duplicates'] = (boolean) $value;
     }
 
     /**
@@ -837,10 +966,12 @@ class Category extends \Magento\ImportExport\Model\Import\AbstractEntity
         }
     }
 
-    protected function _getCategoryName($rowData)
+    protected function getCategoryName($rowData)
     {
-        if (isset($rowData['name']) && strlen($rowData['name']))
+        if (isset($rowData['name']) && strlen($rowData['name'])) {
             return $rowData['name'];
+        }
+
         $categoryParts = $this->_explodeEscaped('/', $rowData[self::COL_CATEGORY]);
         return end($categoryParts);
     }
@@ -848,7 +979,7 @@ class Category extends \Magento\ImportExport\Model\Import\AbstractEntity
     protected function _explodeEscaped($delimiter = '/', $string)
     {
         $exploded = explode($delimiter, $string);
-        $fixed = array();
+        $fixed = [];
         for ($k = 0, $l = count($exploded); $k < $l; ++$k) {
             $eIdx = strlen($exploded[$k]) - 1;
             if ($eIdx >= 0 && $exploded[$k][$eIdx] == '\\') {
@@ -867,27 +998,32 @@ class Category extends \Magento\ImportExport\Model\Import\AbstractEntity
     }
 
     /**
-     * Get the categorie's parent ID
+     * Get parent ID of category
      *
      * @param array $rowData
      * @return bool|mixed
      */
-    protected function _getParentCategory($rowData)
+    protected function getParentCategory($rowData)
     {
-        $categoryParts = $this->_explodeEscaped('/', $rowData[self::COL_CATEGORY]);
-        array_pop($categoryParts);
-        $parent = $this->_implodeEscaped('/', $categoryParts);
+        if ($rowData[self::COL_CATEGORY] == $this->getCategoryName($rowData)) {
+            // if _category eq. name then we don't have parents
+            $parent = false;
+        } else {
+            $categoryParts = $this->_explodeEscaped('/', $rowData[self::COL_CATEGORY]);
+            array_pop($categoryParts);
+            $parent = $this->_implodeEscaped('/', $categoryParts);
+        }
 
         if ($parent) {
-            if (isset($this->_categoriesWithRoots[$rowData[self::COL_ROOT]][$parent])) {
-                return $this->_categoriesWithRoots[$rowData[self::COL_ROOT]][$parent];
-            } elseif (isset($this->_newCategory[$rowData[self::COL_ROOT]][$parent])) {
-                return $this->_newCategory[$rowData[self::COL_ROOT]][$parent];
+            if (isset($this->categoriesWithRoots[$rowData[self::COL_ROOT]][$parent])) {
+                return $this->categoriesWithRoots[$rowData[self::COL_ROOT]][$parent];
+            } elseif (isset($this->newCategory[$rowData[self::COL_ROOT]][$parent])) {
+                return $this->newCategory[$rowData[self::COL_ROOT]][$parent];
             } else {
                 return false;
             }
-        } elseif (isset($this->_categoriesWithRoots[$rowData[self::COL_ROOT]])) {
-            return reset($this->_categoriesWithRoots[$rowData[self::COL_ROOT]]);
+        } elseif (isset($this->categoriesWithRoots[$rowData[self::COL_ROOT]])) {
+            return reset($this->categoriesWithRoots[$rowData[self::COL_ROOT]]);
         } else {
             return false;
         }
@@ -895,7 +1031,7 @@ class Category extends \Magento\ImportExport\Model\Import\AbstractEntity
 
     protected function _implodeEscaped($glue, $array)
     {
-        $newArray = array();
+        $newArray = [];
         foreach ($array as $value) {
             $newArray[] = str_replace($glue, '\\' . $glue, $value);
         }
@@ -907,22 +1043,19 @@ class Category extends \Magento\ImportExport\Model\Import\AbstractEntity
     /**
      * Gather and save information about category entities.
      *
-     * @return AvS_FastSimpleImport_Model_Import_Entity_Category
+     * @return $this
      */
-    protected function _saveCategories()
+    protected function saveCategories()
     {
 
-        //$strftimeFormat = \Varien_Date::convertZendToStrftime(Varien_Date::DATETIME_INTERNAL_FORMAT, true, true);
-        // TODO: Get this Constant
-        $strftimeFormat = "12.00.2016";
-        $nextEntityId = $this->resourceHelper->getNextAutoincrement($this->_entityTable);
+        $nextEntityId = $this->resourceHelper->getNextAutoincrement($this->entityTable);
         static $entityId;
 
         while ($bunch = $this->_dataSourceModel->getNextBunch()) {
-            $entityRowsIn = array();
-            $entityRowsUp = array();
-            $attributes = array();
-            $uploadedGalleryFiles = array();
+            $entityRowsIn = [];
+            $entityRowsUp = [];
+            $attributes = [];
+            $uploadedGalleryFiles = [];
 
             foreach ($bunch as $rowNum => $rowData) {
                 if (!$this->validateRow($rowData, $rowNum)) {
@@ -931,26 +1064,25 @@ class Category extends \Magento\ImportExport\Model\Import\AbstractEntity
                 $rowScope = $this->getRowScope($rowData);
 
                 $rowData = $this->_prepareRowForDb($rowData);
-                $this->_filterRowData($rowData);
+                $this->filterRowData($rowData);
 
                 if (self::SCOPE_DEFAULT == $rowScope) {
-                    $rowCategory = $rowData[self::COL_CATEGORY];
+                    $parentCategory = $this->getParentCategory($rowData);
 
-                    $parentCategory = $this->_getParentCategory($rowData);
+                    $time = !empty($rowData['created_at']) ? strtotime($rowData['created_at']) : null;
 
                     // entity table data
-                    $entityRow = array(
+                    $entityRow = [
                         'parent_id' => $parentCategory['entity_id'],
                         'level' => $parentCategory['level'] + 1,
-                        'created_at' => empty($rowData['created_at']) ? "now()"
-                            : gmstrftime($strftimeFormat, strtotime($rowData['created_at'])),
+                        'created_at' => (new \DateTime($time))->format(DateTime::DATETIME_PHP_FORMAT),
                         'updated_at' => "now()",
                         'position' => $rowData['position']
-                    );
+                    ];
 
-                    if (isset($this->_categoriesWithRoots[$rowData[self::COL_ROOT]][$rowData[self::COL_CATEGORY]])) { //edit
+                    if (isset($this->categoriesWithRoots[$rowData[self::COL_ROOT]][$rowData[self::COL_CATEGORY]])) { //edit
 
-                        $entityId = $this->_categoriesWithRoots[$rowData[self::COL_ROOT]][$rowData[self::COL_CATEGORY]]['entity_id'];
+                        $entityId = $this->categoriesWithRoots[$rowData[self::COL_ROOT]][$rowData[self::COL_CATEGORY]]['entity_id'];
                         $entityRow['entity_id'] = $entityId;
                         $entityRow['path'] = $parentCategory['path'] . '/' . $entityId;
                         $entityRowsUp[] = $entityRow;
@@ -959,39 +1091,39 @@ class Category extends \Magento\ImportExport\Model\Import\AbstractEntity
                         $entityId = $nextEntityId++;
                         $entityRow['entity_id'] = $entityId;
                         $entityRow['path'] = $parentCategory['path'] . '/' . $entityId;
-                        //$entityRow['entity_type_id'] = $this->_entityTypeId;
-                        $entityRow['attribute_set_id'] = $this->_defaultAttributeSetId;
+                        //$entityRow['entity_type_id'] = $this->entityTypeId;
+                        $entityRow['attribute_set_id'] = $this->defaultAttributeSetId;
                         $entityRowsIn[] = $entityRow;
 
-                        $this->_newCategory[$rowData[self::COL_ROOT]][$rowData[self::COL_CATEGORY]] = array(
+                        $this->newCategory[$rowData[self::COL_ROOT]][$rowData[self::COL_CATEGORY]] = [
                             'entity_id' => $entityId,
                             'path' => $entityRow['path'],
                             'level' => $entityRow['level']
-                        );
+                        ];
 
                     }
                 }
 
-                foreach ($this->_imagesArrayKeys as $imageCol) {
+                foreach ($this->imagesArrayKeys as $imageCol) {
                     if (!empty($rowData[$imageCol])) { // 5. Media gallery phase
                         if (!array_key_exists($rowData[$imageCol], $uploadedGalleryFiles)) {
-                            $uploadedGalleryFiles[$rowData[$imageCol]] = $this->_uploadMediaFiles($rowData[$imageCol]);
+                            $uploadedGalleryFiles[$rowData[$imageCol]] = $this->uploadMediaFiles($rowData[$imageCol]);
                         }
                         $rowData[$imageCol] = $uploadedGalleryFiles[$rowData[$imageCol]];
                     }
                 }
 
                 // Attributes phase
-                $rowStore = self::SCOPE_STORE == $rowScope ? $this->_storeCodeToId[$rowData[self::COL_STORE]] : 0;
+                $rowStore = self::SCOPE_STORE == $rowScope ? $this->storeCodeToId[$rowData[self::COL_STORE]] : 0;
 
                 /** @var $category \Magento\Catalog\Model\Category */
-                $category = $this->_defaultCategory->setData($rowData);
+                $category = $this->defaultCategory->setData($rowData);
 
-                foreach (array_intersect_key($rowData, $this->_attributes) as $attrCode => $attrValue) {
-                    if (!$this->_attributes[$attrCode]['is_static']) {
+                foreach (array_intersect_key($rowData, $this->attributes) as $attrCode => $attrValue) {
+                    if (!$this->attributes[$attrCode]['is_static']) {
 
-                        /** @var $attribute Mage_Eav_Model_Entity_Attribute */
-                        $attribute = $this->_attributes[$attrCode]['attribute'];
+                        /** @var \Magento\Eav\Model\Entity\Attribute $attribute */
+                        $attribute = $this->attributes[$attrCode]['attribute'];
 
                         if ('multiselect' != $attribute->getFrontendInput()
                             && self::SCOPE_NULL == $rowScope
@@ -1002,15 +1134,15 @@ class Category extends \Magento\ImportExport\Model\Import\AbstractEntity
                         $attrId = $attribute->getAttributeId();
                         $backModel = $attribute->getBackendModel();
                         $attrTable = $attribute->getBackend()->getTable();
-                        $attrParams = $this->_attributes[$attrCode];
-                        $storeIds = array(0);
+                        $attrParams = $this->attributes[$attrCode];
+                        $storeIds = [0];
 
                         if ('select' == $attrParams['type']) {
                             if (isset($attrParams['options'][strtolower($attrValue)])) {
                                 $attrValue = $attrParams['options'][strtolower($attrValue)];
                             }
                         } elseif ('datetime' == $attribute->getBackendType() && strtotime($attrValue)) {
-                            $attrValue = gmstrftime($strftimeFormat, strtotime($attrValue));
+                            $attrValue = (new \DateTime(strtotime($attrValue)))->format(DateTime::DATETIME_PHP_FORMAT);
                         } elseif ($backModel && 'available_sort_by' != $attrCode) {
                             $attribute->getBackend()->beforeSave($category);
                             $attrValue = $category->getData($attribute->getAttributeCode());
@@ -1020,10 +1152,10 @@ class Category extends \Magento\ImportExport\Model\Import\AbstractEntity
                             if (self::SCOPE_WEBSITE == $attribute->getIsGlobal()) {
                                 // check website defaults already set
                                 if (!isset($attributes[$attrTable][$entityId][$attrId][$rowStore])) {
-                                    $storeIds = $this->_storeIdToWebsiteStoreIds[$rowStore];
+                                    $storeIds = $this->storeIdToWebsiteStoreIds[$rowStore];
                                 }
                             } elseif (self::SCOPE_STORE == $attribute->getIsGlobal()) {
-                                $storeIds = array($rowStore);
+                                $storeIds = [$rowStore];
                             }
                         }
 
@@ -1045,8 +1177,8 @@ class Category extends \Magento\ImportExport\Model\Import\AbstractEntity
                 }
             }
 
-            $this->_saveCategoryEntity($entityRowsIn, $entityRowsUp);
-            $this->_saveCategoryAttributes($attributes);
+            $this->saveCategoryEntity($entityRowsIn, $entityRowsUp);
+            $this->saveCategoryAttributes($attributes);
         }
         return $this;
     }
@@ -1066,7 +1198,7 @@ class Category extends \Magento\ImportExport\Model\Import\AbstractEntity
         }
 
         if (self::SCOPE_DEFAULT == $this->getRowScope($rowData)) {
-            $rowData['name'] = $this->_getCategoryName($rowData);
+            $rowData['name'] = $this->getCategoryName($rowData);
             if (!isset($rowData['position'])) $rowData['position'] = 10000; // diglin - prevent warning message
         }
 
@@ -1081,45 +1213,51 @@ class Category extends \Magento\ImportExport\Model\Import\AbstractEntity
      * @param string $fileName
      * @return string
      */
-    protected function _uploadMediaFiles($fileName)
+    protected function uploadMediaFiles($fileName)
     {
         try {
-            $res = $this->_getUploader()->move($fileName);
+            $res = $this->getUploader()->move($fileName);
             return $res['file'];
-        } catch (Exception $e) {
+        } catch (\Exception $e) {
             return '';
         }
     }
 
     /**
      * Returns an object for upload a media files
+     * 
+     * @throws LocalizedException
+     * @return \Magento\CatalogImportExport\Model\Import\Uploader
      */
-    protected function _getUploader()
+    protected function getUploader()
     {
-        if (is_null($this->_fileUploader)) {
-            $this->_fileUploader = new \Magento\CatalogImportExport\Model\Import\Uploader();
+        if (is_null($this->fileUploader)) {
+            $this->fileUploader = $this->uploaderFactory->create();
 
-            $this->_fileUploader->init();
-            $this->_fileUploader->removeValidateCallback('catalog_product_image');
-            $this->_fileUploader->setFilesDispersion(false);
+            $this->fileUploader->init();
 
-            $tmpDir = Mage::getConfig()->getOptions()->getMediaDir() . '/import';
-            $destDir = Mage::getConfig()->getOptions()->getMediaDir() . '/catalog/category';
-            if (!is_writable($destDir)) {
-                @mkdir($destDir, 0777, true);
+            $dirConfig = DirectoryList::getDefaultConfig();
+            $dirAddon = $dirConfig[DirectoryList::MEDIA][DirectoryList::PATH];
+            $DS = DIRECTORY_SEPARATOR;
+            $tmpPath = $dirAddon . $DS . $this->mediaDirectory->getRelativePath('import');
+
+            if (!$this->fileUploader->setTmpDir($tmpPath)) {
+                throw new LocalizedException(
+                    __('File directory \'%1\' is not readable.', $tmpPath)
+                );
             }
-            // diglin - add auto creation in case folder doesn't exist
-            if (!file_exists($tmpDir)) {
-                @mkdir($tmpDir, 0777, true);
-            }
-            if (!$this->_fileUploader->setTmpDir($tmpDir)) {
-                Mage::throwException("File directory '{$tmpDir}' is not readable.");
-            }
-            if (!$this->_fileUploader->setDestDir($destDir)) {
-                Mage::throwException("File directory '{$destDir}' is not writable.");
+
+            $destinationDir = "catalog/category";
+            $destinationPath = $dirAddon . $DS . $this->mediaDirectory->getRelativePath($destinationDir);
+            $this->mediaDirectory->create($destinationPath);
+
+            if (!$this->fileUploader->setDestDir($destinationPath)) {
+                throw new LocalizedException(
+                    __('File directory \'%1\' is not writable.', $destinationPath)
+                );
             }
         }
-        return $this->_fileUploader;
+        return $this->fileUploader;
     }
 
     /**
@@ -1127,18 +1265,42 @@ class Category extends \Magento\ImportExport\Model\Import\AbstractEntity
      *
      * @param array $entityRowsIn Row for insert
      * @param array $entityRowsUp Row for update
-     * @return Mage_ImportExport_Model_Import_Entity_Customer
+     * @return $this
      */
-    protected function _saveCategoryEntity(array $entityRowsIn, array $entityRowsUp)
+
+    protected function saveCategoryEntity(array $entityRowsIn, array $entityRowsUp)
     {
+        $metadata = $this->metadataPool->getMetadata(CategoryInterface::class);
+        $sequenceInfo = $this->sequenceRegistry->retrieve(CategoryInterface::class);
+
         if ($entityRowsIn) {
-            $this->_connection->insertMultiple($this->_entityTable, $entityRowsIn);
+            if (isset($sequenceInfo['sequenceTable'])) {
+                $newIds = [];
+                $previousVersionId = $this->entityVersion->getPreviousVersionId(
+                    CategoryInterface::class,
+                    1
+                );
+                $nextVersionId = $this->entityVersion->getNextVersionId(CategoryInterface::class, 1);
+                $this->versionManager->setCurrentVersionId($previousVersionId);
+
+                foreach ($entityRowsIn as $key => $row) {
+                    $entityRowsIn[$key]['created_in'] = $previousVersionId;
+                    $entityRowsIn[$key]['updated_in'] = $nextVersionId;
+                    $newIds[]['sequence_value'] = $row['entity_id'];
+                }
+                $metadata->getEntityConnection()->insertMultiple(
+                    $this->_connection->getTableName($sequenceInfo['sequenceTable']), $newIds
+                );
+                $this->versionManager->setCurrentVersionId($nextVersionId);
+            }
+
+            $this->_connection->insertMultiple($this->entityTable, $entityRowsIn);
         }
         if ($entityRowsUp) {
             $this->_connection->insertOnDuplicate(
-                $this->_entityTable,
+                $this->entityTable,
                 $entityRowsUp,
-                array('parent_id', 'path', 'position', 'level', 'children_count')
+                ['parent_id', 'path', 'position', 'level', 'children_count']
             );
         }
         return $this;
@@ -1148,28 +1310,28 @@ class Category extends \Magento\ImportExport\Model\Import\AbstractEntity
      * Save category attributes.
      *
      * @param array $attributesData
-     * @return AvS_FastSimpleImport_Model_Import_Entity_Category
+     * @return $this
      */
-    protected function _saveCategoryAttributes(array $attributesData)
+    protected function saveCategoryAttributes(array $attributesData)
     {
         foreach ($attributesData as $tableName => $data) {
-            $tableData = array();
+            $tableData = [];
 
             foreach ($data as $entityId => $attributes) {
 
                 foreach ($attributes as $attributeId => $storeValues) {
                     foreach ($storeValues as $storeId => $storeValue) {
-                        $tableData[] = array(
+                        $tableData[] = [
                             'entity_id' => $entityId,
-                            //'entity_type_id' => $this->_entityTypeId,
+                            //'entity_type_id' => $this->entityTypeId,
                             'attribute_id' => $attributeId,
                             'store_id' => $storeId,
                             'value' => $storeValue
-                        );
+                        ];
                     }
                 }
             }
-            $this->_connection->insertOnDuplicate($tableName, $tableData, array('value'));
+            $this->_connection->insertOnDuplicate($tableName, $tableData, ['value']);
         }
         return $this;
     }
@@ -1180,11 +1342,12 @@ class Category extends \Magento\ImportExport\Model\Import\AbstractEntity
      * See http://www.magentocommerce.com/bug-tracking/issue/?issue=13539
      * See https://github.com/avstudnitz/AvS_FastSimpleImport/issues/3
      *
-     * @return Mage_ImportExport_Model_Import_Entity_Product
+     * @return $this
      */
-    protected function _saveOnTab()
+    protected function saveOnTab()
     {
         // TODO: If the OnTap Merchandiser Exists, add Code here:
+        return $this;
     }
 
     /**
@@ -1193,7 +1356,7 @@ class Category extends \Magento\ImportExport\Model\Import\AbstractEntity
      * @param array $rowData
      * @return bool
      */
-    protected function _isRowScopeDefault(array $rowData)
+    protected function isRowScopeDefault(array $rowData)
     {
         return strlen(trim($rowData[self::COL_CATEGORY])) ? true : false;
     }
@@ -1203,18 +1366,18 @@ class Category extends \Magento\ImportExport\Model\Import\AbstractEntity
      *
      * @return array
      */
-    protected function _getProcessedCategoryIds()
+    protected function getProcessedCategoryIds()
     {
-        $categoryIds = array();
+        $categoryIds = [];
         $source = $this->getSource();
 
         $source->rewind();
         while ($source->valid()) {
             $current = $source->current();
-            if (isset($this->_newCategory[$current[self::COL_ROOT]][$current[self::COL_CATEGORY]])) {
-                $categoryIds[] = $this->_newCategory[$current[self::COL_ROOT]][$current[self::COL_CATEGORY]];
-            } elseif (isset($this->_categoriesWithRoots[$current[self::COL_ROOT]][$current[self::COL_CATEGORY]])) {
-                $categoryIds[] = $this->_categoriesWithRoots[$current[self::COL_ROOT]][$current[self::COL_CATEGORY]];
+            if (isset($this->newCategory[$current[self::COL_ROOT]][$current[self::COL_CATEGORY]])) {
+                $categoryIds[] = $this->newCategory[$current[self::COL_ROOT]][$current[self::COL_CATEGORY]];
+            } elseif (isset($this->categoriesWithRoots[$current[self::COL_ROOT]][$current[self::COL_CATEGORY]])) {
+                $categoryIds[] = $this->categoriesWithRoots[$current[self::COL_ROOT]][$current[self::COL_CATEGORY]];
             }
 
             $source->next();
@@ -1242,7 +1405,7 @@ class Category extends \Magento\ImportExport\Model\Import\AbstractEntity
                 continue;
             }
 
-            $rowData = $this->_customFieldsMapping($rowData);
+            $rowData = $this->customFieldsMapping($rowData);
 
             $this->validateRow($rowData, $source->key());
             $source->next();
@@ -1252,10 +1415,16 @@ class Category extends \Magento\ImportExport\Model\Import\AbstractEntity
         //var_dump($source);
         return parent::_saveValidatedBunches();
     }
-    protected function _customFieldsMapping($rowData)
+
+    /**
+     * @param array $rowData
+     * @return array
+     */
+    protected function customFieldsMapping($rowData)
     {
         return $rowData;
     }
+
     /**
      * Returns attributes all values in label-value or value-value pairs form. Labels are lower-cased.
      *
@@ -1268,9 +1437,10 @@ class Category extends \Magento\ImportExport\Model\Import\AbstractEntity
 
         if ($attribute->usesSource()) {
             // should attribute has index (option value) instead of a label?
-            $index = in_array($attribute->getAttributeCode(), $this->_indexValueAttributes) ? 'value' : 'label';
+            $index = in_array($attribute->getAttributeCode(), $this->indexValueAttributes) ? 'value' : 'label';
 
             // only default (admin) store values used
+            /** @var \Magento\Eav\Model\Entity\Attribute $attribute */
             $attribute->setStoreId(\Magento\Store\Model\Store::DEFAULT_STORE_ID);
 
             try {

@@ -5,13 +5,16 @@
  */
 namespace FireGento\FastSimpleImport\Helper;
 
+use Magento\Store\Model\ScopeInterface;
+
 class Config extends \Magento\Framework\App\Helper\AbstractHelper
 {
 
-    const XML_PATH_BEHAVIOR         = 'fastsimpleimport/default/behavior';
-    const XML_PATH_ENTITY           = 'fastsimpleimport/default/entity';
-    const XML_PATH_VALIDATION_STRATEGY = 'fastsimpleimport/default/validation_strategy';
-    const XML_PATH_ALLOWED_ERROR_COUNT = 'fastsimpleimport/default/allowed_error_count';
+    const XML_PATH_IGNORE_DUPLICATES      = 'fastsimpleimport/default/ignore_duplicates';
+    const XML_PATH_BEHAVIOR               = 'fastsimpleimport/default/behavior';
+    const XML_PATH_ENTITY                 = 'fastsimpleimport/default/entity';
+    const XML_PATH_VALIDATION_STRATEGY    = 'fastsimpleimport/default/validation_strategy';
+    const XML_PATH_ALLOWED_ERROR_COUNT    = 'fastsimpleimport/default/allowed_error_count';
     const XML_PATH_IMPORT_IMAGES_FILE_FIR = 'fastsimpleimport/default/import_images_file_dir';
 
     /**
@@ -26,12 +29,17 @@ class Config extends \Magento\Framework\App\Helper\AbstractHelper
     /**
      * @return string
      */
+    public function getIgnoreDuplicates()
+    {
+        return $this->scopeConfig->getValue(self::XML_PATH_IGNORE_DUPLICATES, ScopeInterface::SCOPE_STORE);
+    }
+
+    /**
+     * @return string
+     */
     public function getBehavior()
     {
-        return $this->scopeConfig->getValue(
-            self::XML_PATH_BEHAVIOR,
-            \Magento\Store\Model\ScopeInterface::SCOPE_STORE
-        );
+        return $this->scopeConfig->getValue(self::XML_PATH_BEHAVIOR, ScopeInterface::SCOPE_STORE);
     }
 
     /**
@@ -39,10 +47,7 @@ class Config extends \Magento\Framework\App\Helper\AbstractHelper
      */
     public function getEntity()
     {
-        return $this->scopeConfig->getValue(
-            self::XML_PATH_ENTITY,
-            \Magento\Store\Model\ScopeInterface::SCOPE_STORE
-        );
+        return $this->scopeConfig->getValue(self::XML_PATH_ENTITY, ScopeInterface::SCOPE_STORE);
     }
 
     /**
@@ -50,10 +55,7 @@ class Config extends \Magento\Framework\App\Helper\AbstractHelper
      */
     public function getValidationStrategy()
     {
-        return $this->scopeConfig->getValue(
-            self::XML_PATH_VALIDATION_STRATEGY,
-            \Magento\Store\Model\ScopeInterface::SCOPE_STORE
-        );
+        return $this->scopeConfig->getValue(self::XML_PATH_VALIDATION_STRATEGY, ScopeInterface::SCOPE_STORE);
     }
 
     /**
@@ -61,10 +63,7 @@ class Config extends \Magento\Framework\App\Helper\AbstractHelper
      */
     public function getAllowedErrorCount()
     {
-        return $this->scopeConfig->getValue(
-            self::XML_PATH_ALLOWED_ERROR_COUNT,
-            \Magento\Store\Model\ScopeInterface::SCOPE_STORE
-        );
+        return $this->scopeConfig->getValue(self::XML_PATH_ALLOWED_ERROR_COUNT, ScopeInterface::SCOPE_STORE);
     }
 
     /**
@@ -72,9 +71,6 @@ class Config extends \Magento\Framework\App\Helper\AbstractHelper
      */
     public function getImportFileDir()
     {
-        return $this->scopeConfig->getValue(
-            self::XML_PATH_IMPORT_IMAGES_FILE_FIR,
-            \Magento\Store\Model\ScopeInterface::SCOPE_STORE
-        );
+        return $this->scopeConfig->getValue(self::XML_PATH_IMPORT_IMAGES_FILE_FIR, ScopeInterface::SCOPE_STORE);
     }
 }
