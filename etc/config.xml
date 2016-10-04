@@ -9,6 +9,7 @@
     <default>
         <fastsimpleimport>
             <default>
+                <ignore_duplicates>0</ignore_duplicates>
                 <behavior>append</behavior>
                 <entity>catalog_product</entity>
                 <validation_strategy>validation-stop-on-errors</validation_strategy>

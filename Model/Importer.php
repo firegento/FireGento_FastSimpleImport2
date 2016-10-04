@@ -49,7 +49,7 @@ class Importer
 
     /**
      * Importer constructor.
-     * @param \Magento\ImportExport\Model\Import $importModel
+     * @param \Magento\ImportExport\Model\ImportFactory $importModelFactory
      * @param \FireGento\FastSimpleImport\Helper\ImportError $errorHelper
      * @param \FireGento\FastSimpleImport\Model\Adapters\ImportAdapterFactoryInterface $importAdapterFactory
      * @param \FireGento\FastSimpleImport\Helper\Config $configHelper
@@ -69,6 +69,7 @@ class Importer
         $this->settings = [
             'entity' => $this->configHelper->getEntity(),
             'behavior' => $this->configHelper->getBehavior(),
+            'ignore_duplicates' => $this->configHelper->getIgnoreDuplicates(),
             'validation_strategy' => $this->configHelper->getValidationStrategy(),
             'allowed_error_count' => $this->configHelper->getAllowedErrorCount(),
             'import_images_file_dir' => $this->configHelper->getImportFileDir(),
@@ -171,6 +172,14 @@ class Importer
     public function setBehavior($behavior)
     {
         $this->settings['behavior'] = $behavior;
+    }
+
+    /**
+     * @param string $value
+     */
+    public function setIgnoreDuplicates($value)
+    {
+        $this->settings['ignore_duplicates'] = $value;
     }
 
     /**
