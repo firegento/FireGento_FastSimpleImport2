@@ -653,7 +653,7 @@ class Category extends \Magento\ImportExport\Model\Import\AbstractEntity
     /**
      * Removes empty keys in case value is null or empty string
      * Behavior can be turned off with config setting "fastsimpleimport/general/clear_field_on_empty_string"
-     * You can define a string which can be used for clearing a field, configured in "fastsimpleimport/product/symbol_for_clear_field"
+     * You can define a string which can be used for clearing a field, configured in "fastsimpleimport/category/symbol_for_clear_field"
      *
      * @param array $rowData
      */
@@ -698,7 +698,7 @@ class Category extends \Magento\ImportExport\Model\Import\AbstractEntity
 
 
     /**
-     * Partially reindex newly created and updated products
+     * Partially reindex newly created and updated categories
      *
      * @return $this
      */
@@ -777,7 +777,7 @@ class Category extends \Magento\ImportExport\Model\Import\AbstractEntity
             $this->saveOnTab();
         }
 
-        $this->eventManager->dispatch('catalog_product_import_finish_before', ['adapter' => $this]);
+        $this->eventManager->dispatch('catalog_category_import_finish_before', ['adapter' => $this]);
 
         return true;
     }
@@ -790,7 +790,7 @@ class Category extends \Magento\ImportExport\Model\Import\AbstractEntity
      */
     protected function deleteCategories()
     {
-        $productEntityTable = $this->resourceFactory->create()->getEntityTable();
+        $categoryEntityTable = $this->resourceFactory->create()->getEntityTable();
 
         while ($bunch = $this->_dataSourceModel->getNextBunch()) {
             $idToDelete = [];
@@ -808,7 +808,7 @@ class Category extends \Magento\ImportExport\Model\Import\AbstractEntity
                     $this->objectRelationProcessor->delete(
                         $this->transactionManager,
                         $this->_connection,
-                        $productEntityTable,
+                        $categoryEntityTable,
                         $this->_connection->quoteInto('entity_id IN (?)', $idToDelete),
                         ['entity_id' => $idToDelete]
                     );
@@ -817,7 +817,7 @@ class Category extends \Magento\ImportExport\Model\Import\AbstractEntity
                     $this->transactionManager->rollBack();
                     throw $e;
                 }
-                $this->eventManager->dispatch('catalog_product_import_bunch_delete_after', ['adapter' => $this, 'bunch' => $bunch]);
+                $this->eventManager->dispatch('catalog_category_import_bunch_delete_after', ['adapter' => $this, 'bunch' => $bunch]);
             }
         }
         
@@ -1362,7 +1362,7 @@ class Category extends \Magento\ImportExport\Model\Import\AbstractEntity
     }
 
     /**
-     * Ids of products which have been created, updated or deleted
+     * Ids of categories which have been created, updated or deleted
      *
      * @return array
      */
