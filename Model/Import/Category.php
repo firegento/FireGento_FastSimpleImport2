@@ -6,8 +6,7 @@ use Magento\ImportExport\Model\Import;
 use Magento\ImportExport\Model\Import\ErrorProcessing\ProcessingErrorAggregatorInterface;
 use Magento\Framework\EntityManager\MetadataPool;
 use Magento\Framework\EntityManager\Sequence\SequenceRegistry;
-use Magento\Staging\Model\VersionManager;
-use Magento\Staging\Model\ResourceModel\Db\ReadEntityVersion;
+
 use Magento\Framework\App\Filesystem\DirectoryList;
 use Magento\Framework\Model\ResourceModel\Db\TransactionManagerInterface;
 use Magento\Framework\Model\ResourceModel\Db\ObjectRelationProcessor;
@@ -29,6 +28,7 @@ use Magento\Framework\Event\ManagerInterface;
 use Magento\CatalogImportExport\Model\Import\UploaderFactory;
 use Magento\Framework\Filesystem;
 
+use FireGento\FastSimpleImport\Model\Enterprise\VersionFeatures;
 /**
  * Entity Adapter for importing Magento Categories
  */
@@ -282,16 +282,6 @@ class Category extends \Magento\ImportExport\Model\Import\AbstractEntity
     protected $sequenceRegistry;
 
     /**
-     * @var VersionManager
-     */
-    protected $versionManager;
-
-    /**
-     * @var ReadEntityVersion
-     */
-    protected $entityVersion;
-
-    /**
      * @var ObjectRelationProcessor
      */
     protected $objectRelationProcessor;
@@ -310,10 +300,13 @@ class Category extends \Magento\ImportExport\Model\Import\AbstractEntity
      * @var string|null
      */
     protected $entityTypeId;
+    /**
+     * @var VersionFeatures
+     */
+    private $versionFeatures;
 
     /**
      * Category constructor.
-     *
      * @param StringUtils $string
      * @param ScopeConfigInterface $scopeConfig
      * @param ImportFactory $importFactory
@@ -331,8 +324,7 @@ class Category extends \Magento\ImportExport\Model\Import\AbstractEntity
      * @param Filesystem $filesystem
      * @param MetadataPool $metadataPool
      * @param SequenceRegistry $sequenceRegistry
-     * @param VersionManager $versionManager
-     * @param ReadEntityVersion $entityVersion
+     * @param VersionFeatures $versionFeatures
      * @param ObjectRelationProcessor $objectRelationProcessor
      * @param TransactionManagerInterface $transactionManager
      * @param CategoryResourceModelFactory $resourceFactory
@@ -356,8 +348,7 @@ class Category extends \Magento\ImportExport\Model\Import\AbstractEntity
         Filesystem $filesystem,
         MetadataPool $metadataPool,
         SequenceRegistry $sequenceRegistry,
-        VersionManager $versionManager,
-        ReadEntityVersion $entityVersion,
+        VersionFeatures $versionFeatures,
         ObjectRelationProcessor $objectRelationProcessor,
         TransactionManagerInterface $transactionManager,
         CategoryResourceModelFactory $resourceFactory,
@@ -385,8 +376,7 @@ class Category extends \Magento\ImportExport\Model\Import\AbstractEntity
         $this->mediaDirectory = $filesystem->getDirectoryWrite(DirectoryList::ROOT);
         $this->metadataPool = $metadataPool;
         $this->sequenceRegistry = $sequenceRegistry;
-        $this->versionManager = $versionManager;
-        $this->entityVersion = $entityVersion;
+
         $this->objectRelationProcessor = $objectRelationProcessor;
         $this->transactionManager = $transactionManager;
         $this->resourceFactory = $resourceFactory;
@@ -406,6 +396,7 @@ class Category extends \Magento\ImportExport\Model\Import\AbstractEntity
             ->initAttributeSetId();
         
         $this->entityTable = $this->defaultCategory->getResource()->getEntityTable();
+        $this->versionFeatures = $versionFeatures;
     }
 
     /**
@@ -1276,12 +1267,9 @@ class Category extends \Magento\ImportExport\Model\Import\AbstractEntity
         if ($entityRowsIn) {
             if (isset($sequenceInfo['sequenceTable'])) {
                 $newIds = [];
-                $previousVersionId = $this->entityVersion->getPreviousVersionId(
-                    CategoryInterface::class,
-                    1
-                );
-                $nextVersionId = $this->entityVersion->getNextVersionId(CategoryInterface::class, 1);
-                $this->versionManager->setCurrentVersionId($previousVersionId);
+                $previousVersionId = $this->versionFeatures->getPreviousVersionId();
+                $nextVersionId = $this->versionFeatures->getNextVersionId();
+                $this->versionFeatures->setCurrentVersionId($previousVersionId);
 
                 foreach ($entityRowsIn as $key => $row) {
                     $entityRowsIn[$key]['created_in'] = $previousVersionId;
@@ -1291,7 +1279,8 @@ class Category extends \Magento\ImportExport\Model\Import\AbstractEntity
                 $metadata->getEntityConnection()->insertMultiple(
                     $this->_connection->getTableName($sequenceInfo['sequenceTable']), $newIds
                 );
-                $this->versionManager->setCurrentVersionId($nextVersionId);
+                $this->versionFeatures->setCurrentVersionId($previousVersionId);
+
             }
 
             $this->_connection->insertMultiple($this->entityTable, $entityRowsIn);
