@@ -32,6 +32,10 @@
                 <field id="import_images_file_dir" translate="label" type="text" sortOrder="50" showInDefault="1" showInWebsite="0" showInStore="0">
                     <label>Import Images Directory</label>
                 </field>
+                <field id="ignore_duplicates" translate="label" type="select" sortOrder="60" showInDefault="1" showInWebsite="0" showInStore="0">
+                    <label>Ignore duplicates</label>
+                    <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                </field>
             </group>
         </section>
     </system>
