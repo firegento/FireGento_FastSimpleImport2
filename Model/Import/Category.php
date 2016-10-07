@@ -428,8 +428,7 @@ class Category extends \Magento\ImportExport\Model\Import\AbstractEntity
      */
     protected function initCategories()
     {
-
-        $collection = $this->categoryCollection->addNameToResult();
+        $collection = $this->getCollection();
 
         /** @var \Magento\Catalog\Model\Category $category */
         foreach ($collection as $category) {
@@ -464,6 +463,14 @@ class Category extends \Magento\ImportExport\Model\Import\AbstractEntity
         }
         return $this;
 
+    }
+
+    /**
+     * @return \Magento\Catalog\Model\ResourceModel\Category\Collection
+     */
+    protected function getCollection()
+    {
+        return $this->categoryCollection->addNameToResult();
     }
 
     /**
@@ -1007,7 +1014,12 @@ class Category extends \Magento\ImportExport\Model\Import\AbstractEntity
         }
     }
 
-    protected function _implodeEscaped($glue, $array)
+    /**
+     * @param mixed $glue
+     * @param array $array
+     * @return string
+     */
+    protected function _implodeEscaped($glue, array $array)
     {
         $newArray = [];
         foreach ($array as $value) {
@@ -1016,8 +1028,6 @@ class Category extends \Magento\ImportExport\Model\Import\AbstractEntity
         return implode('/', $newArray);
     }
 
-
-
     /**
      * Gather and save information about category entities.
      *
@@ -1025,7 +1035,6 @@ class Category extends \Magento\ImportExport\Model\Import\AbstractEntity
      */
     protected function saveCategories()
     {
-
         $nextEntityId = $this->resourceHelper->getNextAutoincrement($this->entityTable);
         static $entityId;
 
@@ -1235,6 +1244,7 @@ class Category extends \Magento\ImportExport\Model\Import\AbstractEntity
                 );
             }
         }
+
         return $this->fileUploader;
     }
 
@@ -1252,14 +1262,13 @@ class Category extends \Magento\ImportExport\Model\Import\AbstractEntity
         $categoryImportVersionFeature = $this->versionFeatures->create('CategoryImportVersion');
 
         if ($entityRowsIn) {
-
             if($categoryImportVersionFeature){
                 $entityRowsIn = $categoryImportVersionFeature->processCategory($entityRowsIn);
             }
 
-
             $this->_connection->insertMultiple($this->entityTable, $entityRowsIn);
         }
+
         if ($entityRowsUp) {
             $this->_connection->insertOnDuplicate(
                 $this->entityTable,
@@ -1267,6 +1276,7 @@ class Category extends \Magento\ImportExport\Model\Import\AbstractEntity
                 ['parent_id', 'path', 'position', 'level', 'children_count']
             );
         }
+
         return $this;
     }
 
