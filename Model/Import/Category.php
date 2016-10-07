@@ -1003,7 +1003,7 @@ class Category extends \Magento\ImportExport\Model\Import\AbstractEntity
 
                         if ('select' == $attrParams['type']) {
                             if (isset($attrParams['options'][strtolower($attrValue)])) {
-                                $attrValue = $attrParams['options'][strtolower($attrValue)];
+                                $attrValue = strtolower($attrValue);
                             }
                         } elseif ('datetime' == $attribute->getBackendType() && strtotime($attrValue)) {
                             $attrValue = gmstrftime($strftimeFormat, strtotime($attrValue));
