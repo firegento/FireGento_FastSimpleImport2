@@ -1,13 +1,12 @@
 <?php
 namespace FireGento\FastSimpleImport\Model\Import;
 
+use FireGento\FastSimpleImport\Model\Enterprise\VersionFeaturesFactory;
 use Magento\Catalog\Api\Data\CategoryInterface;
 use Magento\ImportExport\Model\Import;
 use Magento\ImportExport\Model\Import\ErrorProcessing\ProcessingErrorAggregatorInterface;
-use Magento\Framework\EntityManager\MetadataPool;
-use Magento\Framework\EntityManager\Sequence\SequenceRegistry;
-use Magento\Staging\Model\VersionManager;
-use Magento\Staging\Model\ResourceModel\Db\ReadEntityVersion;
+
+
 use Magento\Framework\App\Filesystem\DirectoryList;
 use Magento\Framework\Model\ResourceModel\Db\TransactionManagerInterface;
 use Magento\Framework\Model\ResourceModel\Db\ObjectRelationProcessor;
@@ -28,6 +27,7 @@ use Magento\Eav\Model\Config as EavConfig;
 use Magento\Framework\Event\ManagerInterface;
 use Magento\CatalogImportExport\Model\Import\UploaderFactory;
 use Magento\Framework\Filesystem;
+
 
 /**
  * Entity Adapter for importing Magento Categories
@@ -271,25 +271,7 @@ class Category extends \Magento\ImportExport\Model\Import\AbstractEntity
      */
     protected $uploaderFactory;
 
-    /**
-     * @var MetadataPool
-     */
-    protected $metadataPool;
 
-    /**
-     * @var SequenceRegistry
-     */
-    protected $sequenceRegistry;
-
-    /**
-     * @var VersionManager
-     */
-    protected $versionManager;
-
-    /**
-     * @var ReadEntityVersion
-     */
-    protected $entityVersion;
 
     /**
      * @var ObjectRelationProcessor
@@ -310,10 +292,13 @@ class Category extends \Magento\ImportExport\Model\Import\AbstractEntity
      * @var string|null
      */
     protected $entityTypeId;
+    /**
+     * @var VersionFeaturesFactory
+     */
+    private $versionFeatures;
 
     /**
      * Category constructor.
-     *
      * @param StringUtils $string
      * @param ScopeConfigInterface $scopeConfig
      * @param ImportFactory $importFactory
@@ -329,10 +314,7 @@ class Category extends \Magento\ImportExport\Model\Import\AbstractEntity
      * @param ManagerInterface $eventManager
      * @param UploaderFactory $imageUploaderFactory
      * @param Filesystem $filesystem
-     * @param MetadataPool $metadataPool
-     * @param SequenceRegistry $sequenceRegistry
-     * @param VersionManager $versionManager
-     * @param ReadEntityVersion $entityVersion
+     * @param VersionFeaturesFactory $versionFeatures
      * @param ObjectRelationProcessor $objectRelationProcessor
      * @param TransactionManagerInterface $transactionManager
      * @param CategoryResourceModelFactory $resourceFactory
@@ -354,10 +336,7 @@ class Category extends \Magento\ImportExport\Model\Import\AbstractEntity
         ManagerInterface $eventManager,
         UploaderFactory $imageUploaderFactory,
         Filesystem $filesystem,
-        MetadataPool $metadataPool,
-        SequenceRegistry $sequenceRegistry,
-        VersionManager $versionManager,
-        ReadEntityVersion $entityVersion,
+        VersionFeaturesFactory $versionFeatures,
         ObjectRelationProcessor $objectRelationProcessor,
         TransactionManagerInterface $transactionManager,
         CategoryResourceModelFactory $resourceFactory,
@@ -383,10 +362,8 @@ class Category extends \Magento\ImportExport\Model\Import\AbstractEntity
         $this->uploaderFactory = $imageUploaderFactory;
 
         $this->mediaDirectory = $filesystem->getDirectoryWrite(DirectoryList::ROOT);
-        $this->metadataPool = $metadataPool;
-        $this->sequenceRegistry = $sequenceRegistry;
-        $this->versionManager = $versionManager;
-        $this->entityVersion = $entityVersion;
+
+
         $this->objectRelationProcessor = $objectRelationProcessor;
         $this->transactionManager = $transactionManager;
         $this->resourceFactory = $resourceFactory;
@@ -406,6 +383,7 @@ class Category extends \Magento\ImportExport\Model\Import\AbstractEntity
             ->initAttributeSetId();
         
         $this->entityTable = $this->defaultCategory->getResource()->getEntityTable();
+        $this->versionFeatures = $versionFeatures;
     }
 
     /**
@@ -1270,29 +1248,15 @@ class Category extends \Magento\ImportExport\Model\Import\AbstractEntity
 
     protected function saveCategoryEntity(array $entityRowsIn, array $entityRowsUp)
     {
-        $metadata = $this->metadataPool->getMetadata(CategoryInterface::class);
-        $sequenceInfo = $this->sequenceRegistry->retrieve(CategoryInterface::class);
+        /** @var \FireGento\FastSimpleImport\Model\Enterprise\CategoryImportVersion $categoryImportVersionFeature */
+        $categoryImportVersionFeature = $this->versionFeatures->create('CategoryImportVersion');
 
         if ($entityRowsIn) {
-            if (isset($sequenceInfo['sequenceTable'])) {
-                $newIds = [];
-                $previousVersionId = $this->entityVersion->getPreviousVersionId(
-                    CategoryInterface::class,
-                    1
-                );
-                $nextVersionId = $this->entityVersion->getNextVersionId(CategoryInterface::class, 1);
-                $this->versionManager->setCurrentVersionId($previousVersionId);
 
-                foreach ($entityRowsIn as $key => $row) {
-                    $entityRowsIn[$key]['created_in'] = $previousVersionId;
-                    $entityRowsIn[$key]['updated_in'] = $nextVersionId;
-                    $newIds[]['sequence_value'] = $row['entity_id'];
-                }
-                $metadata->getEntityConnection()->insertMultiple(
-                    $this->_connection->getTableName($sequenceInfo['sequenceTable']), $newIds
-                );
-                $this->versionManager->setCurrentVersionId($nextVersionId);
+            if($categoryImportVersionFeature){
+                $entityRowsIn = $categoryImportVersionFeature->processCategory($entityRowsIn);
             }
+
 
             $this->_connection->insertMultiple($this->entityTable, $entityRowsIn);
         }
