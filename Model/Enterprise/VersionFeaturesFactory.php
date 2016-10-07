@@ -1,5 +1,9 @@
 <?php
 namespace FireGento\FastSimpleImport\Model\Enterprise;
+
+use Magento\Framework\ObjectManagerInterface;
+use Magento\Framework\App\ProductMetadataInterface;
+
 /**
  * Factory which creates Classes from Enterprise
  * Class ClassFactory
@@ -11,23 +15,33 @@ class VersionFeaturesFactory
     const EDITION_ENTERPRISE = 'Enterprise';
     const EDITION_COMMUNITY = 'Community';
     /**
-     * @var \Magento\Framework\ObjectManager\ObjectManager
+     * @var ObjectManagerInterface
      */
     protected $_objectManager;
     /**
-     * @var \Magento\Framework\App\ProductMetadataInterface
+     * @var ProductMetadataInterface
      */
     private $productMetadata;
 
+    /**
+     * VersionFeaturesFactory constructor.
+     *
+     * @param ObjectManagerInterface $objectManager
+     * @param ProductMetadataInterface $productMetadata
+     */
     public function __construct(
-        \Magento\Framework\ObjectManager\ObjectManager $objectManager,
-        \Magento\Framework\App\ProductMetadataInterface $productMetadata
+        ObjectManagerInterface $objectManager,
+        ProductMetadataInterface $productMetadata
     )
     {
         $this->_objectManager = $objectManager;
         $this->productMetadata = $productMetadata;
     }
 
+    /**
+     * @param string $featureName
+     * @return mixed|null
+     */
     public function create($featureName)
     {
         $features = $this->getFeatures();
