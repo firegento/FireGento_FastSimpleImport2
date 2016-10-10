@@ -453,7 +453,7 @@ class Category extends \Magento\ImportExport\Model\Import\AbstractEntity
                     $this->categoriesWithRoots[$rootCategoryName] = [];
                 }
 
-                $index = $this->_implodeEscaped('/', $path);
+                $index = $this->implodeEscaped('/', $path);
                 $this->categoriesWithRoots[$rootCategoryName][$index] = [
                     'entity_id' => $category->getId(),
                     'path' => $category->getPath(),
@@ -971,7 +971,7 @@ class Category extends \Magento\ImportExport\Model\Import\AbstractEntity
             return $rowData['name'];
         }
 
-        $categoryParts = $this->_explodeEscaped('/', $rowData[self::COL_CATEGORY]);
+        $categoryParts = $this->explodeEscaped('/', $rowData[self::COL_CATEGORY]);
         return end($categoryParts);
     }
 
@@ -980,7 +980,7 @@ class Category extends \Magento\ImportExport\Model\Import\AbstractEntity
      * @param string $string
      * @return array
      */
-    protected function _explodeEscaped($delimiter = '/', $string)
+    protected function explodeEscaped($delimiter = '/', $string)
     {
         $exploded = explode($delimiter, $string);
         $fixed = [];
@@ -1013,9 +1013,9 @@ class Category extends \Magento\ImportExport\Model\Import\AbstractEntity
             // if _category eq. name then we don't have parents
             $parent = false;
         } else {
-            $categoryParts = $this->_explodeEscaped('/', $rowData[self::COL_CATEGORY]);
+            $categoryParts = $this->explodeEscaped('/', $rowData[self::COL_CATEGORY]);
             array_pop($categoryParts);
-            $parent = $this->_implodeEscaped('/', $categoryParts);
+            $parent = $this->implodeEscaped('/', $categoryParts);
         }
 
         if ($parent) {
@@ -1038,7 +1038,7 @@ class Category extends \Magento\ImportExport\Model\Import\AbstractEntity
      * @param array $array
      * @return string
      */
-    protected function _implodeEscaped($glue, array $array)
+    protected function implodeEscaped($glue, array $array)
     {
         $newArray = [];
         foreach ($array as $value) {
