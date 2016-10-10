@@ -109,6 +109,22 @@ class CategoryImportVersion
 
             $this->versionManager->setCurrentVersionId($nextVersionId);
         }
+
         return $entityRowsIn;
+    }
+
+    /**
+     * Get entity field name
+     *
+     * @return string
+     */
+    public function getEntityFieldName()
+    {
+        $sequenceInfo = $this->sequenceRegistry->retrieve(CategoryInterface::class);
+        if (isset($sequenceInfo['sequenceTable'])) {
+            return 'row_id';
+        }
+
+        return 'entity_id';
     }
 }
