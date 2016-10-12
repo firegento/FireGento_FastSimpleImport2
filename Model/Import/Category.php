@@ -480,7 +480,7 @@ class Category extends \Magento\ImportExport\Model\Import\AbstractEntity
      */
     protected function getCollection()
     {
-        return $this->categoryCollection->addNameToResult();
+        return $this->categoryCollection->setStoreId(0)->addNameToResult();
     }
 
     /**
