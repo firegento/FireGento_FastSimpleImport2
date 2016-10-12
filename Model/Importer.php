@@ -37,11 +37,7 @@ class Importer
      * @var string
      */
     protected $logTrace = "";
-    /**
-     * default delimiter for several values in one cell as default for FIELD_FIELD_MULTIPLE_VALUE_SEPARATOR
-     * @var string
-     */
-    protected $multipleValueSeparator = Import::DEFAULT_GLOBAL_MULTI_VALUE_SEPARATOR;
+
     /**
      * @var \Magento\ImportExport\Model\ImportFactory
      */
@@ -73,24 +69,18 @@ class Importer
             'validation_strategy' => $this->configHelper->getValidationStrategy(),
             'allowed_error_count' => $this->configHelper->getAllowedErrorCount(),
             'import_images_file_dir' => $this->configHelper->getImportFileDir(),
-            '_import_multiple_value_separator' => $this->multipleValueSeparator
+            '_import_multiple_value_separator' =>  Import::DEFAULT_GLOBAL_MULTI_VALUE_SEPARATOR
         ];
     }
 
-    /**
-     * @return string
-     */
     public function getMultipleValueSeparator()
     {
-        return $this->multipleValueSeparator;
+        return $this->settings['_import_multiple_value_separator'];
     }
 
-    /**
-     * @param string $multipleValueSeparator
-     */
     public function setMultipleValueSeparator($multipleValueSeparator)
     {
-        $this->multipleValueSeparator = $multipleValueSeparator;
+        $this->settings['_import_multiple_value_separator'] = $multipleValueSeparator;
     }
 
     /**
