@@ -77,7 +77,7 @@ class Category extends \Magento\ImportExport\Model\Import\AbstractEntity
      *
      * @var string
      */
-    protected $masterAttributeCode = '_category';
+    protected $masterAttributeCode = self::COL_CATEGORY;
 
     /**
      * Category attributes parameters.
@@ -114,9 +114,9 @@ class Category extends \Magento\ImportExport\Model\Import\AbstractEntity
      */
     protected $indexValueAttributes = [
         'default_sort_by',
-        'available_sort_by',
-        'is_active',
-        'include_in_menu'
+        CategoryModel::KEY_AVAILABLE_SORT_BY,
+        CategoryModel::KEY_IS_ACTIVE,
+        CategoryModel::KEY_INCLUDE_IN_MENU
     ];
 
 
@@ -408,10 +408,7 @@ class Category extends \Magento\ImportExport\Model\Import\AbstractEntity
      */
     protected function initAttributes()
     {
-
-
         foreach ($this->attributeCollection as $attribute) {
-
             $this->attributes[$attribute->getAttributeCode()] = [
                 'id' => $attribute->getId(),
                 'is_required' => $attribute->getIsRequired(),
@@ -435,17 +432,17 @@ class Category extends \Magento\ImportExport\Model\Import\AbstractEntity
     {
         $collection = $this->getCollection();
 
-        /** @var \Magento\Catalog\Model\Category $category */
+        /** @var CategoryModel $category */
         foreach ($collection as $category) {
-            $structure = explode('/', $category->getPath());
+            $structure = explode('/', $category->getData(CategoryModel::KEY_PATH));
             $pathSize  = count($structure);
 
             if ($pathSize > 1) {
                 $path = [];
                 for ($i = 1; $i < $pathSize; $i++) {
-                    /** @var \Magento\Catalog\Model\Category $c */
+                    /** @var CategoryModel $c */
                     $c = $collection->getItemById($structure[$i]);
-                    $path[] = $c->getName();
+                    $path[] = $c->getData(CategoryModel::KEY_NAME);
                 }
 
                 $rootCategoryName = array_shift($path);
@@ -456,9 +453,9 @@ class Category extends \Magento\ImportExport\Model\Import\AbstractEntity
                 $index = $this->implodeEscaped('/', $path);
                 $this->categoriesWithRoots[$rootCategoryName][$index] = [
                     'entity_id' => $category->getId(),
-                    'path' => $category->getPath(),
-                    'level' => $category->getLevel(),
-                    'position' => $category->getPosition()
+                    CategoryModel::KEY_PATH => $category->getData(CategoryModel::KEY_PATH),
+                    CategoryModel::KEY_LEVEL => $category->getData(CategoryModel::KEY_LEVEL),
+                    CategoryModel::KEY_POSITION => $category->getData(CategoryModel::KEY_POSITION)
                 ];
 
                 //allow importing by ids.
@@ -869,7 +866,7 @@ class Category extends \Magento\ImportExport\Model\Import\AbstractEntity
 
         // common validation
         if (self::SCOPE_DEFAULT == $rowScope) { // category is specified, row is SCOPE_DEFAULT, new category block begins
-            $rowData['name'] = $this->getCategoryName($rowData);
+            $rowData[CategoryModel::KEY_NAME] = $this->getCategoryName($rowData);
 
             $this->_processedEntitiesCount++;
 
@@ -924,7 +921,6 @@ class Category extends \Magento\ImportExport\Model\Import\AbstractEntity
             $category = false; // mark row as invalid for next address rows
         }
 
-
         return !isset($this->invalidRows[$rowNum]);
     }
 
@@ -967,8 +963,8 @@ class Category extends \Magento\ImportExport\Model\Import\AbstractEntity
      */
     protected function getCategoryName($rowData)
     {
-        if (isset($rowData['name']) && strlen($rowData['name'])) {
-            return $rowData['name'];
+        if (isset($rowData[CategoryModel::KEY_NAME]) && strlen($rowData[CategoryModel::KEY_NAME])) {
+            return $rowData[CategoryModel::KEY_NAME];
         }
 
         $categoryParts = $this->explodeEscaped('/', $rowData[self::COL_CATEGORY]);
@@ -1075,35 +1071,35 @@ class Category extends \Magento\ImportExport\Model\Import\AbstractEntity
                 if (self::SCOPE_DEFAULT == $rowScope) {
                     $parentCategory = $this->getParentCategory($rowData);
 
-                    $time = !empty($rowData['created_at']) ? strtotime($rowData['created_at']) : null;
+                    $time = !empty($rowData[CategoryModel::KEY_CREATED_AT]) ? strtotime($rowData[CategoryModel::KEY_CREATED_AT]) : null;
 
                     // entity table data
                     $entityRow = [
-                        'parent_id' => $parentCategory['entity_id'],
-                        'level' => $parentCategory['level'] + 1,
-                        'created_at' => (new \DateTime($time))->format(DateTime::DATETIME_PHP_FORMAT),
-                        'updated_at' => "now()",
-                        'position' => $rowData['position']
+                        CategoryModel::KEY_PARENT_ID => $parentCategory['entity_id'],
+                        CategoryModel::KEY_LEVEL => $parentCategory[CategoryModel::KEY_LEVEL] + 1,
+                        CategoryModel::KEY_CREATED_AT => (new \DateTime($time))->format(DateTime::DATETIME_PHP_FORMAT),
+                        CategoryModel::KEY_UPDATED_AT => "now()",
+                        CategoryModel::KEY_POSITION => $rowData[CategoryModel::KEY_POSITION]
                     ];
 
                     if (isset($this->categoriesWithRoots[$rowData[self::COL_ROOT]][$rowData[self::COL_CATEGORY]])) { //edit
                         $entityId = $this->categoriesWithRoots[$rowData[self::COL_ROOT]][$rowData[self::COL_CATEGORY]]['entity_id'];
                         $entityRow['entity_id'] = $entityId;
-                        $entityRow['path'] = $parentCategory['path'] . '/' . $entityId;
+                        $entityRow[CategoryModel::KEY_PATH] = $parentCategory[CategoryModel::KEY_PATH] . '/' . $entityId;
                         $entityRowsUp[] = $entityRow;
                         $rowData['entity_id'] = $entityId;
 
                     } else { // create
                         $entityId = $nextEntityId++;
                         $entityRow['entity_id'] = $entityId;
-                        $entityRow['path'] = $parentCategory['path'] . '/' . $entityId;
+                        $entityRow[CategoryModel::KEY_PATH] = $parentCategory[CategoryModel::KEY_PATH] . '/' . $entityId;
                         $entityRow['attribute_set_id'] = $this->defaultAttributeSetId;
                         $entityRowsIn[] = $entityRow;
 
                         $this->newCategory[$rowData[self::COL_ROOT]][$rowData[self::COL_CATEGORY]] = [
                             'entity_id' => $entityId,
-                            'path' => $entityRow['path'],
-                            'level' => $entityRow['level']
+                            CategoryModel::KEY_PATH => $entityRow[CategoryModel::KEY_PATH],
+                            CategoryModel::KEY_LEVEL => $entityRow[CategoryModel::KEY_LEVEL]
                         ];
                     }
                 }
@@ -1153,12 +1149,12 @@ class Category extends \Magento\ImportExport\Model\Import\AbstractEntity
                         }
 
                         if (self::SCOPE_STORE == $rowScope) {
-                            if (self::SCOPE_WEBSITE == $attribute->getIsGlobal()) {
+                            if (self::SCOPE_WEBSITE == $attribute->getData('is_global')) {
                                 // check website defaults already set
                                 if (!isset($attributes[$attrTable][$entityId][$attrId][$rowStore])) {
                                     $storeIds = $this->storeIdToWebsiteStoreIds[$rowStore];
                                 }
-                            } elseif (self::SCOPE_STORE == $attribute->getIsGlobal()) {
+                            } elseif (self::SCOPE_STORE == $attribute->getData('is_global')) {
                                 $storeIds = [$rowStore];
                             }
                         }
@@ -1202,8 +1198,12 @@ class Category extends \Magento\ImportExport\Model\Import\AbstractEntity
         }
 
         if (self::SCOPE_DEFAULT == $this->getRowScope($rowData)) {
-            $rowData['name'] = $this->getCategoryName($rowData);
-            if (!isset($rowData['position'])) $rowData['position'] = 10000; // diglin - prevent warning message
+            $rowData[CategoryModel::KEY_NAME] = $this->getCategoryName($rowData);
+
+            if (!isset($rowData[CategoryModel::KEY_POSITION])) {
+                // diglin - prevent warning message
+                $rowData[CategoryModel::KEY_POSITION] = 10000;
+            }
         }
 
         return $rowData;
@@ -1287,7 +1287,7 @@ class Category extends \Magento\ImportExport\Model\Import\AbstractEntity
             $this->_connection->insertOnDuplicate(
                 $this->entityTable,
                 $entityRowsUp,
-                ['parent_id', 'path', 'position', 'level', 'children_count']
+                [CategoryModel::KEY_PARENT_ID, CategoryModel::KEY_PATH, CategoryModel::KEY_POSITION, CategoryModel::KEY_LEVEL, 'children_count']
             );
         }
 
@@ -1403,9 +1403,7 @@ class Category extends \Magento\ImportExport\Model\Import\AbstractEntity
             $this->validateRow($rowData, $source->key());
             $source->next();
         }
-        //$this->checkUrlKeyDuplicates();
-        //$this->getOptionEntity()->validateAmbiguousData();
-        //var_dump($source);
+
         return parent::_saveValidatedBunches();
     }
 
@@ -1441,7 +1439,7 @@ class Category extends \Magento\ImportExport\Model\Import\AbstractEntity
                     foreach (is_array($option['value']) ? $option['value'] : [$option] as $innerOption) {
                         if (strlen($innerOption['value'])) {
                             // skip ' -- Please Select -- ' option
-                            $options[$innerOption['value']] = (string)$innerOption[$index];
+                            $options[strtolower($innerOption['value'])] = (string)$innerOption[$index];
                         }
                     }
                 }
@@ -1449,6 +1447,7 @@ class Category extends \Magento\ImportExport\Model\Import\AbstractEntity
                 // ignore exceptions connected with source models
             }
         }
+        
         return $options;
     }
 }
