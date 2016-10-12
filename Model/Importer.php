@@ -73,11 +73,20 @@ class Importer
         ];
     }
 
+    /**
+     * Getter for default Delimiter
+     * @return mixed
+     */
+
     public function getMultipleValueSeparator()
     {
         return $this->settings['_import_multiple_value_separator'];
     }
 
+    /**
+     * Sets the default delimiter
+     * @param $multipleValueSeparator
+     */
     public function setMultipleValueSeparator($multipleValueSeparator)
     {
         $this->settings['_import_multiple_value_separator'] = $multipleValueSeparator;
