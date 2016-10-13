@@ -8,6 +8,7 @@ use Magento\Staging\Model\ResourceModel\Db\ReadEntityVersion;
 use Magento\Catalog\Api\Data\CategoryInterface;
 use Magento\Framework\App\ResourceConnection;
 use Psr\Log\LoggerInterface;
+use Magento\Framework\ObjectManagerInterface;
 
 class CategoryImportVersion
 {
@@ -54,16 +55,16 @@ class CategoryImportVersion
     public function __construct(
         MetadataPool $metadataPool,
         SequenceRegistry $sequenceRegistry,
-        VersionManager $versionManager,
-        ReadEntityVersion $readEntityVersion,
         ResourceConnection $appResource,
-        LoggerInterface $logger
+        LoggerInterface $logger,
+        ObjectManagerInterface $objectManager
     )
     {
         $this->metadataPool = $metadataPool;
         $this->sequenceRegistry = $sequenceRegistry;
-        $this->versionManager = $versionManager;
-        $this->readEntityVersion = $readEntityVersion;
+        // Hack with ObjectManager because we cannot use DI (Issue #32)
+        $this->versionManager = $objectManager->create('Magento\Staging\Model\VersionManager', array());
+        $this->readEntityVersion = $objectManager->create('Magento\Staging\Model\ResourceModel\Db\ReadEntityVersion', array());
         $this->appResource = $appResource;
         $this->logger = $logger;
     }
