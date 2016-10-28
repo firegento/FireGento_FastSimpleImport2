@@ -116,7 +116,8 @@ class Category extends \Magento\ImportExport\Model\Import\AbstractEntity
         'default_sort_by',
         CategoryModel::KEY_AVAILABLE_SORT_BY,
         CategoryModel::KEY_IS_ACTIVE,
-        CategoryModel::KEY_INCLUDE_IN_MENU
+        CategoryModel::KEY_INCLUDE_IN_MENU,
+        'is_anchor'
     ];
 
 
