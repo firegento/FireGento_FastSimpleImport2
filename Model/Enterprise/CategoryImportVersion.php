@@ -1,8 +1,6 @@
 <?php
 namespace FireGento\FastSimpleImport\Model\Enterprise;
 
-use Magento\Framework\EntityManager\MetadataPool;
-use Magento\Framework\EntityManager\Sequence\SequenceRegistry;
 use Magento\Staging\Model\VersionManager;
 use Magento\Staging\Model\ResourceModel\Db\ReadEntityVersion;
 use Magento\Catalog\Api\Data\CategoryInterface;
@@ -45,23 +43,19 @@ class CategoryImportVersion
     /**
      * CategoryImportVersion constructor.
      *
-     * @param MetadataPool $metadataPool
-     * @param SequenceRegistry $sequenceRegistry
      * @param VersionManager $versionManager
      * @param ReadEntityVersion $readEntityVersion
      * @param ResourceConnection $appResource
      * @param LoggerInterface $logger
      */
     public function __construct(
-        MetadataPool $metadataPool,
-        SequenceRegistry $sequenceRegistry,
         ResourceConnection $appResource,
         LoggerInterface $logger,
         ObjectManagerInterface $objectManager
     )
     {
-        $this->metadataPool = $metadataPool;
-        $this->sequenceRegistry = $sequenceRegistry;
+        $this->metadataPool = $objectManager->create('Magento\Framework\EntityManager\MetadataPool', array());
+        $this->sequenceRegistry = $objectManager->create('Magento\Framework\EntityManager\Sequence\SequenceRegistry', array());
         // Hack with ObjectManager because we cannot use DI (Issue #32)
         $this->versionManager = $objectManager->create('Magento\Staging\Model\VersionManager', array());
         $this->readEntityVersion = $objectManager->create('Magento\Staging\Model\ResourceModel\Db\ReadEntityVersion', array());
