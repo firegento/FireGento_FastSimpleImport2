@@ -28,7 +28,7 @@ You can call the import from your own Magento 2 code. Example:
     try {
         $importerModel->processImport($categoryArray);
     } catch (\Exception $e) {
-        $output->writeln($e->getMessage());
+        print_r($e->getMessage());
     }
     
     print_r($importerModel->getLogTrace());
