@@ -9,12 +9,17 @@ namespace FireGento\FastSimpleImport\Model\Adapters;
 
 class NestedArrayAdapter extends ArrayAdapter
 {
+    protected $multipleValueSeparator;
+
     /**
      * ArrayAdapter constructor.
      * @param array $data
+     * @param string $multipleValueSeparator
      */
-    public function __construct($data)
+    public function __construct($data, $multipleValueSeparator = ', ')
     {
+        $this->multipleValueSeparator = $multipleValueSeparator;
+
         parent::__construct($data);
         foreach ($this->_array as &$row) {
             foreach ($row as $colName => &$value)
@@ -30,11 +35,11 @@ class NestedArrayAdapter extends ArrayAdapter
      * Transform nested array to string
      *
      * @param array $line
-     * @return array
+     * @return void
      */
     protected function convertToArray(&$line)
     {
-        $implodeStr = ', ';
+        $implodeStr = $this->multipleValueSeparator;
         $arr = array_map(
             function ($value, $key) use (&$implodeStr) {
                 if (is_array($value) && is_numeric($key)) {

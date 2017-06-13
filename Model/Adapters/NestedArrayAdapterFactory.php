@@ -21,7 +21,7 @@ class NestedArrayAdapterFactory implements ImportAdapterFactoryInterface
 
     /**
      * @param array $data
-     * @return \FireGento\FastSimpleImport\Model\Adapters\ArrayAdapter
+     * @return \FireGento\FastSimpleImport\Model\Adapters\NestedArrayAdapter
      */
     public function create(array $data = [])
     {
