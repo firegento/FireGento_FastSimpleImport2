@@ -118,7 +118,12 @@ class Importer
     protected function _validateData($dataArray)
     {
         $importModel = $this->createImportModel();
-        $source = $this->importAdapterFactory->create(array('data' => $dataArray));
+        $source = $this->importAdapterFactory->create(
+            array(
+                'data' => $dataArray,
+                'multipleValueSeparator' => $this->getMultipleValueSeparator()
+            )
+        );
         $this->validationResult = $importModel->validateSource($source);
         $this->addToLogTrace($importModel);
         return $this->validationResult;
