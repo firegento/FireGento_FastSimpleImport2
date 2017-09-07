@@ -14,6 +14,7 @@ class VersionFeaturesFactory
 
     const EDITION_ENTERPRISE = 'Enterprise';
     const EDITION_COMMUNITY = 'Community';
+    const EDITION_B2B = 'B2B';
     /**
      * @var ObjectManagerInterface
      */
@@ -47,7 +48,8 @@ class VersionFeaturesFactory
         $features = $this->getFeatures();
         $feature = $features[$featureName];
 
-        if ( ! version_compare($this->productMetadata->getVersion(), $feature['minVersion'],'>=')) {
+        if ( ($this->productMetadata->getEdition() != self::EDITION_B2B && ! version_compare($this->productMetadata->getVersion(), $feature['minVersion'],'>=')) ||
+            ($this->productMetadata->getEdition() == self::EDITION_B2B && ! version_compare($this->productMetadata->getVersion(), $feature['minB2bVersion'], '>='))) {
             return null;
         }
         if ($feature['minEdition'] == self::EDITION_ENTERPRISE && $this->productMetadata->getEdition() == self::EDITION_COMMUNITY) {
@@ -65,6 +67,7 @@ class VersionFeaturesFactory
         return array(
             "CategoryImportVersion" => array(
                 "minVersion" => "2.1.1",
+                "minB2bVersion" => "1.0.0-rc",
                 "minEdition" => self::EDITION_ENTERPRISE,
                 "className" => 'FireGento\FastSimpleImport\Model\Enterprise\CategoryImportVersion'
             )
