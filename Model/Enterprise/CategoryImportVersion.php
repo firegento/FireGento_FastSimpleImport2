@@ -54,8 +54,8 @@ class CategoryImportVersion
         ObjectManagerInterface $objectManager
     )
     {
-        $this->metadataPool = $objectManager->create('Magento\Framework\EntityManager\MetadataPool', array());
-        $this->sequenceRegistry = $objectManager->create('Magento\Framework\EntityManager\Sequence\SequenceRegistry', array());
+        $this->metadataPool = $objectManager->get('Magento\Framework\EntityManager\MetadataPool');
+        $this->sequenceRegistry = $objectManager->get('Magento\Framework\EntityManager\Sequence\SequenceRegistry');
         // Hack with ObjectManager because we cannot use DI (Issue #32)
         $this->versionManager = $objectManager->create('Magento\Staging\Model\VersionManager', array());
         $this->readEntityVersion = $objectManager->create('Magento\Staging\Model\ResourceModel\Db\ReadEntityVersion', array());
