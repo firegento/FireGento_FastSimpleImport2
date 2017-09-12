@@ -69,6 +69,7 @@ class Importer
             'validation_strategy' => $this->configHelper->getValidationStrategy(),
             'allowed_error_count' => $this->configHelper->getAllowedErrorCount(),
             'import_images_file_dir' => $this->configHelper->getImportFileDir(),
+            'category_path_seperator' => $this->configHelper->getCategoryPathSeperator(),
             '_import_multiple_value_separator' =>  Import::DEFAULT_GLOBAL_MULTI_VALUE_SEPARATOR
         ];
     }

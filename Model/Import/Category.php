@@ -516,7 +516,7 @@ class Category extends \Magento\ImportExport\Model\Import\AbstractEntity
                     $this->categoriesWithRoots[$rootCategoryName] = [];
                 }
 
-                $index = $this->implodeEscaped('/', $path);
+                $index = $this->implodeEscaped($this->_scopeConfig->getValue(Config::XML_PATH_CATEGORY_PATH_SEPERATOR), $path);
                 $this->categoriesWithRoots[$rootCategoryName][$index] = [
                     'entity_id' => $category->getId(),
                     CategoryModel::KEY_PATH => $category->getData(CategoryModel::KEY_PATH),
@@ -557,7 +557,7 @@ class Category extends \Magento\ImportExport\Model\Import\AbstractEntity
         foreach ($array as $value) {
             $newArray[] = str_replace($glue, '\\' . $glue, $value);
         }
-        return implode('/', $newArray);
+        return implode($this->_scopeConfig->getValue(Config::XML_PATH_CATEGORY_PATH_SEPERATOR), $newArray);
     }
 
     /**
@@ -805,8 +805,9 @@ class Category extends \Magento\ImportExport\Model\Import\AbstractEntity
             if ($storeId == 0) {
                 continue;
             }
+
             $category = $this->categoryRepository->get($categoryId, $storeId);
-            //$category->setStoreId($storeId);
+
             $urlRewrites = $this->categoryUrlRewriteGenerator->generate($category, true);
             $this->urlPersist->replace($urlRewrites);
         }
@@ -1052,7 +1053,7 @@ class Category extends \Magento\ImportExport\Model\Import\AbstractEntity
             return $rowData[CategoryModel::KEY_NAME];
         }
 
-        $categoryParts = $this->explodeEscaped('/', $rowData[self::COL_CATEGORY]);
+        $categoryParts = $this->explodeEscaped($this->_scopeConfig->getValue(Config::XML_PATH_CATEGORY_PATH_SEPERATOR), $rowData[self::COL_CATEGORY]);
         return end($categoryParts);
     }
 
@@ -1094,9 +1095,9 @@ class Category extends \Magento\ImportExport\Model\Import\AbstractEntity
             // if _category eq. name then we don't have parents
             $parent = false;
         } else {
-            $categoryParts = $this->explodeEscaped('/', $rowData[self::COL_CATEGORY]);
+            $categoryParts = $this->explodeEscaped($this->_scopeConfig->getValue(Config::XML_PATH_CATEGORY_PATH_SEPERATOR), $rowData[self::COL_CATEGORY]);
             array_pop($categoryParts);
-            $parent = $this->implodeEscaped('/', $categoryParts);
+            $parent = $this->implodeEscaped($this->_scopeConfig->getValue(Config::XML_PATH_CATEGORY_PATH_SEPERATOR), $categoryParts);
         }
 
         if ($parent) {
