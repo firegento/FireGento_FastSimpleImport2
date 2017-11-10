@@ -2,6 +2,7 @@
 
 namespace FireGento\FastSimpleImport\Model\Import;
 
+use FireGento\FastSimpleImport\Helper\Config;
 use FireGento\FastSimpleImport\Model\Enterprise\VersionFeaturesFactory;
 use FireGento\FastSimpleImport\Model\Import\Proxy\Category\ResourceModelFactory as CategoryResourceModelFactory;
 use FireGento\FastSimpleImport\ResourceModel\Import\Category\StorageFactory;
