@@ -30,6 +30,8 @@ use Magento\CatalogImportExport\Model\Import\UploaderFactory;
 use Magento\Framework\Filesystem;
 use Magento\UrlRewrite\Model\UrlPersistInterface;
 use Magento\Catalog\Api\CategoryRepositoryInterface;
+use Magento\CatalogUrlRewrite\Observer\UrlRewriteHandler;
+
 /**
  * Entity Adapter for importing Magento Categories
  */
@@ -311,6 +313,10 @@ class Category extends \Magento\ImportExport\Model\Import\AbstractEntity
      */
     private $urlPersist;
     /**
+     * @var UrlRewriteHandler
+     */
+    private $urlRewriteHandler;
+    /**
      * @var CategoryRepositoryInterface
      */
     private $categoryRepository;
@@ -361,6 +367,7 @@ class Category extends \Magento\ImportExport\Model\Import\AbstractEntity
         \Magento\CatalogUrlRewrite\Model\CategoryUrlRewriteGenerator $categoryUrlRewriteGenerator,
         CategoryRepositoryInterface $categoryRepository,
         UrlPersistInterface $urlPersist,
+        UrlRewriteHandler $urlRewriteHandler,
         array $data = []
     )
     {
@@ -383,6 +390,7 @@ class Category extends \Magento\ImportExport\Model\Import\AbstractEntity
         $this->eventManager = $eventManager;
         $this->uploaderFactory = $imageUploaderFactory;
         $this->versionFeatures = $versionFeatures;
+        $this->urlRewriteHandler = $urlRewriteHandler;
 
         $this->mediaDirectory = $filesystem->getDirectoryWrite(DirectoryList::ROOT);
 
@@ -808,6 +816,18 @@ class Category extends \Magento\ImportExport\Model\Import\AbstractEntity
             }
 
             $category = $this->categoryRepository->get($categoryId, $storeId);
+
+            // Make sure 301 redirects are being generated for categories
+            $saveRewritesHistory = $this->_scopeConfig->isSetFlag(
+                \Magento\CatalogUrlRewrite\Block\UrlKeyRenderer::XML_PATH_SEO_SAVE_HISTORY,
+                \Magento\Store\Model\ScopeInterface::SCOPE_STORE,
+                $storeId
+            );
+            $category->setData('save_rewrites_history', $saveRewritesHistory);
+            $urlRewrites = array_merge(
+                $this->categoryUrlRewriteGenerator->generate($category, true),
+                $this->urlRewriteHandler->generateProductUrlRewrites($category)
+            );
 
             $urlRewrites = $this->categoryUrlRewriteGenerator->generate($category, true);
             $this->urlPersist->replace($urlRewrites);
