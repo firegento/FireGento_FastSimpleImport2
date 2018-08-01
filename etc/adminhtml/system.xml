@@ -40,6 +40,14 @@
                     <label>Category path seperator</label>
                 </field>
             </group>
+            <group id="database" translate="label" sortOrder="2" showInDefault="1" showInWebsite="0" showInStore="0">
+                <label>Database settings</label>
+                <field id="import_temp_table" type="select" sortOrder="10" showInDefault="1" translate="label,comment">
+                    <label>Create temporary table for validated import_data</label>
+                    <comment>This will create a temporary table instead of using the regular table. It allows parallel execution of imports without data loss. But it will not be possible anymore to upload CSV import files in the admin panel.</comment>
+                    <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                </field>
+            </group>
         </section>
     </system>
 </config>
