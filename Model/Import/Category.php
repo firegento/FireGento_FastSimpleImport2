@@ -7,6 +7,7 @@ use FireGento\FastSimpleImport\Model\Enterprise\VersionFeaturesFactory;
 use FireGento\FastSimpleImport\Model\Import\Proxy\Category\ResourceModelFactory as CategoryResourceModelFactory;
 use FireGento\FastSimpleImport\ResourceModel\Import\Category\StorageFactory;
 use FireGento\FastSimpleImport\Model\Enterprise\CategoryImportVersion;
+use FireGento\FastSimpleImport\Helper\Config;
 
 use Magento\ImportExport\Model\Import;
 use Magento\ImportExport\Model\Import\ErrorProcessing\ProcessingErrorAggregatorInterface;
