@@ -8,8 +8,6 @@ Wrapper for Magento 2 ImportExport functionality, which imports products and cus
 
 ## [Documentation](http://firegento-fastsimpleimport2.readthedocs.io/en/latest/)
 
-
-
 ## Requirements
 
 - Magento >= 2.0.0
@@ -47,9 +45,6 @@ FireGento Team
     composer require firegento/fastsimpleimport 
     bin/magento module:enable FireGento_FastSimpleImport
     bin/magento setup:upgrade
-    
-    
-    
     
 ## Licence
 
