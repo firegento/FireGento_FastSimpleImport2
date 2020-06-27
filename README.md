@@ -1,5 +1,5 @@
 <!-- ALL-CONTRIBUTORS-BADGE:START - Do not remove or modify this section -->
-[![All Contributors](https://img.shields.io/badge/all_contributors-4-orange.svg?style=flat-square)](#contributors-)
+[![All Contributors](https://img.shields.io/badge/all_contributors-5-orange.svg?style=flat-square)](#contributors-)
 <!-- ALL-CONTRIBUTORS-BADGE:END -->
 # FireGento_FastSimpleImport
 
@@ -34,6 +34,7 @@ Thanks goes to these wonderful people ([emoji key](https://allcontributors.org/d
     <td align="center"><a href="http://www.integer-net.de/agentur/andreas-von-studnitz/"><img src="https://avatars1.githubusercontent.com/u/662059?v=4" width="100px;" alt=""/><br /><sub><b>Andreas von Studnitz</b></sub></a><br /><a href="https://github.com/firegento/FireGento_FastSimpleImport2/commits?author=avstudnitz" title="Code">💻</a></td>
     <td align="center"><a href="https://github.com/nhp"><img src="https://avatars3.githubusercontent.com/u/512911?v=4" width="100px;" alt=""/><br /><sub><b>Nils Preuß</b></sub></a><br /><a href="https://github.com/firegento/FireGento_FastSimpleImport2/commits?author=nhp" title="Code">💻</a></td>
     <td align="center"><a href="https://www.webzap.eu/"><img src="https://avatars1.githubusercontent.com/u/563328?v=4" width="100px;" alt=""/><br /><sub><b>Lennart Schreiber</b></sub></a><br /><a href="https://github.com/firegento/FireGento_FastSimpleImport2/commits?author=Kipperlenny" title="Code">💻</a></td>
+    <td align="center"><a href="http://www.youwe.nl/"><img src="https://avatars1.githubusercontent.com/u/701008?v=4" width="100px;" alt=""/><br /><sub><b>Bogdan Lewinsky</b></sub></a><br /><a href="https://github.com/firegento/FireGento_FastSimpleImport2/commits?author=blewinsky" title="Code">💻</a></td>
   </tr>
 </table>
 
