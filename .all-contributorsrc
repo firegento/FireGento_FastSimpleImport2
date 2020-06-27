@@ -1,0 +1,123 @@
+{
+  "projectName": "FireGento_FastSimpleImport2",
+  "projectOwner": "firegento",
+  "repoType": "github",
+  "repoHost": "https://github.com",
+  "files": [
+    "README.md"
+  ],
+  "imageSize": 100,
+  "commit": true,
+  "commitConvention": "none",
+  "contributors": [
+    {
+      "login": "EliasKotlyar",
+      "name": "Elias Kotlyar",
+      "avatar_url": "https://avatars0.githubusercontent.com/u/9529505?v=4",
+      "profile": "https://github.com/EliasKotlyar",
+      "contributions": [
+        "code"
+      ]
+    },
+    {
+      "login": "avstudnitz",
+      "name": "Andreas von Studnitz",
+      "avatar_url": "https://avatars1.githubusercontent.com/u/662059?v=4",
+      "profile": "http://www.integer-net.de/agentur/andreas-von-studnitz/",
+      "contributions": [
+        "code"
+      ]
+    },
+    {
+      "login": "nhp",
+      "name": "Nils Preuß",
+      "avatar_url": "https://avatars3.githubusercontent.com/u/512911?v=4",
+      "profile": "https://github.com/nhp",
+      "contributions": [
+        "code"
+      ]
+    },
+    {
+      "login": "Kipperlenny",
+      "name": "Lennart Schreiber",
+      "avatar_url": "https://avatars1.githubusercontent.com/u/563328?v=4",
+      "profile": "https://www.webzap.eu/",
+      "contributions": [
+        "code"
+      ]
+    },
+    {
+      "login": "blewinsky",
+      "name": "Bogdan Lewinsky",
+      "avatar_url": "https://avatars1.githubusercontent.com/u/701008?v=4",
+      "profile": "http://www.youwe.nl/",
+      "contributions": [
+        "code"
+      ]
+    },
+    {
+      "login": "rosenberger-e-conomix",
+      "name": "rosenberger-e-conomix",
+      "avatar_url": "https://avatars3.githubusercontent.com/u/47806105?v=4",
+      "profile": "https://github.com/rosenberger-e-conomix",
+      "contributions": [
+        "code"
+      ]
+    },
+    {
+      "login": "schmengler",
+      "name": "Fabian Schmengler />",
+      "avatar_url": "https://avatars1.githubusercontent.com/u/367320?v=4",
+      "profile": "https://www.schmengler-se.de/",
+      "contributions": [
+        "code"
+      ]
+    },
+    {
+      "login": "koenner01",
+      "name": "Koen V.",
+      "avatar_url": "https://avatars3.githubusercontent.com/u/13639210?v=4",
+      "profile": "https://github.com/koenner01",
+      "contributions": [
+        "code"
+      ]
+    },
+    {
+      "login": "hummer2k",
+      "name": "hummer2k",
+      "avatar_url": "https://avatars1.githubusercontent.com/u/2178371?v=4",
+      "profile": "https://github.com/hummer2k",
+      "contributions": [
+        "code"
+      ]
+    },
+    {
+      "login": "dcole-inviqa",
+      "name": "dcole-inviqa",
+      "avatar_url": "https://avatars0.githubusercontent.com/u/6168391?v=4",
+      "profile": "https://github.com/dcole-inviqa",
+      "contributions": [
+        "code"
+      ]
+    },
+    {
+      "login": "VincentMarmiesse",
+      "name": "Vincent MARMIESSE",
+      "avatar_url": "https://avatars0.githubusercontent.com/u/1949412?v=4",
+      "profile": "https://github.com/VincentMarmiesse",
+      "contributions": [
+        "code"
+      ]
+    },
+    {
+      "login": "kkrieger85",
+      "name": "Kevin Krieger",
+      "avatar_url": "https://avatars2.githubusercontent.com/u/4435523?v=4",
+      "profile": "https://github.com/kkrieger85",
+      "contributions": [
+        "doc"
+      ]
+    }
+  ],
+  "contributorsPerLine": 7
+}
