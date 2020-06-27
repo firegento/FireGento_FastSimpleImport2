@@ -57,5 +57,5 @@ FireGento Team
 
 ## Copyright
 
-(c) 2016 FireGento Team
+(c) 2016 -2020 FireGento Team
 
