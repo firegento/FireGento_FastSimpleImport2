@@ -181,6 +181,14 @@ class Importer
     {
         $this->settings['behavior'] = $behavior;
     }
+    
+    /**
+     * @param string $value
+     */
+    public function setCategoryPathSeperator(string $value)
+    {
+        $this->settings['category_path_seperator'] = $value;
+    }
 
     /**
      * @param string $value
