@@ -189,6 +189,11 @@ class Importer
     {
         $this->settings['category_path_seperator'] = $value;
     }
+    
+    public function getCategoryPathSeperator() 
+    {
+        return $this->settings['category_path_seperator'];
+    }        
 
     /**
      * @param string $value
