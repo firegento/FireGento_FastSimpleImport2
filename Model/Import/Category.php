@@ -18,7 +18,7 @@ use Magento\Framework\Stdlib\DateTime;
 use Magento\Framework\Stdlib\StringUtils;
 use Magento\Catalog\Model\Category as CategoryModel;
 use Magento\Catalog\Model\ResourceModel\Category\Attribute\Collection as CategoryAttributeCollection;
-use Magento\Catalog\Model\ResourceModel\Category\Collection as CategoryCollection;
+use Magento\Catalog\Model\ResourceModel\Category\CollectionFactory as CategoryCollectionFactory;
 use Magento\Framework\App\Config\ScopeConfigInterface;
 use Magento\ImportExport\Model\ImportFactory;
 use Magento\ImportExport\Model\ResourceModel\Helper as ImportExportHelper;
@@ -259,9 +259,9 @@ class Category extends \Magento\ImportExport\Model\Import\AbstractEntity
     protected $attributeCollection;
 
     /**
-     * @var \Magento\Catalog\Model\ResourceModel\Category\Collection
+     * @var CategoryCollectionFactory
      */
-    protected $categoryCollection;
+    protected $categoryCollectionFactory;
 
     /**
      * @var \Magento\ImportExport\Model\ResourceModel\Helper
@@ -327,7 +327,7 @@ class Category extends \Magento\ImportExport\Model\Import\AbstractEntity
      * @param StorageFactory $storageFactory
      * @param CategoryModel $defaultCategory
      * @param CategoryAttributeCollection $attributeCollection
-     * @param CategoryCollection $categoryCollection
+     * @param CategoryCollectionFactory $categoryCollectionFactory
      * @param EavConfig $eavConfig
      * @param ManagerInterface $eventManager
      * @param UploaderFactory $imageUploaderFactory
@@ -349,7 +349,7 @@ class Category extends \Magento\ImportExport\Model\Import\AbstractEntity
         StorageFactory $storageFactory,
         CategoryModel $defaultCategory,
         CategoryAttributeCollection $attributeCollection,
-        CategoryCollection $categoryCollection,
+        CategoryCollectionFactory $categoryCollectionFactory,
         EavConfig $eavConfig,
         ManagerInterface $eventManager,
         UploaderFactory $imageUploaderFactory,
@@ -379,7 +379,7 @@ class Category extends \Magento\ImportExport\Model\Import\AbstractEntity
         $this->storageFactory = $storageFactory;
         $this->defaultCategory = $defaultCategory;
         $this->attributeCollection = $attributeCollection;
-        $this->categoryCollection = $categoryCollection;
+        $this->categoryCollectionFactory = $categoryCollectionFactory;
         $this->eventManager = $eventManager;
         $this->uploaderFactory = $imageUploaderFactory;
         $this->versionFeatures = $versionFeatures;
@@ -544,7 +544,7 @@ class Category extends \Magento\ImportExport\Model\Import\AbstractEntity
      */
     protected function getCollection()
     {
-        return $this->categoryCollection->setStoreId(0)->addNameToResult();
+        return $this->categoryCollectionFactory->create()->setStoreId(0)->addNameToResult();
     }
 
     /**
