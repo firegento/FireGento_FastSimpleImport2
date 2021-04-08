@@ -1095,6 +1095,10 @@ class Category extends \Magento\ImportExport\Model\Import\AbstractEntity
         if ($rowData[self::COL_CATEGORY] == $this->getCategoryName($rowData)) {
             // if _category eq. name then we don't have parents
             $parent = false;
+        } elseif (is_numeric($rowData[self::COL_CATEGORY]) && isset($this->categoriesWithRoots[$rowData[self::COL_ROOT]][$rowData[self::COL_CATEGORY]])) {
+            // existing category given via ID, retrieve correct parent
+            $categoryParts = explode('/', $this->categoriesWithRoots[$rowData[self::COL_ROOT]][$rowData[self::COL_CATEGORY]][CategoryModel::KEY_PATH]);
+            $parent = $categoryParts[count($categoryParts) - 2];
         } else {
             $categoryParts = $this->explodeEscaped($this->_scopeConfig->getValue(Config::XML_PATH_CATEGORY_PATH_SEPERATOR), $rowData[self::COL_CATEGORY]);
             array_pop($categoryParts);
