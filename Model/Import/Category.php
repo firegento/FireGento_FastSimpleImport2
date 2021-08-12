@@ -1219,7 +1219,7 @@ class Category extends \Magento\ImportExport\Model\Import\AbstractEntity
                                 $attrValue = $attrParams['options'][strtolower($attrValue)];
                             }
                         } elseif ('datetime' == $attribute->getBackendType() && strtotime($attrValue)) {
-                            $attrValue = (new \DateTime(strtotime($attrValue)))->format(DateTime::DATETIME_PHP_FORMAT);
+                            $attrValue = (new \DateTime($attrValue))->format(DateTime::DATETIME_PHP_FORMAT);
                         } elseif ($backModel && 'available_sort_by' != $attrCode) {
                             $attribute->getBackend()->beforeSave($category);
                             $attrValue = $category->getData($attribute->getAttributeCode());
