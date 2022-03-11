@@ -6,12 +6,14 @@
 Wrapper for Magento 2 ImportExport functionality, which imports products and customers from arrays
 
 
-## [Documentation](http://firegento-fastsimpleimport2.readthedocs.io/en/latest/)
+## Documentation
+
+See [http://firegento-fastsimpleimport2.readthedocs.io/en/latest/](http://firegento-fastsimpleimport2.readthedocs.io/en/latest/)
 
 ## Requirements
 
-- Magento >= 2.0.0
-- PHP >= 5.5.0
+- Magento >= 2.3.0
+- PHP >= 5.7.0
 
 ## Support
 
@@ -71,5 +73,5 @@ FireGento Team
 
 ## Copyright
 
-(c) 2016 -2020 FireGento Team
+(c) 2016 - 2022 FireGento Team
 

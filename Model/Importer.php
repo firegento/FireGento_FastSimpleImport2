@@ -1,142 +1,75 @@
 <?php
 /**
- * Copyright © 2016 FireGento e.V. - All rights reserved.
+ * Copyright © 2016 - 2022 FireGento e.V. - All rights reserved.
  * See LICENSE.md bundled with this module for license details.
  */
+
 namespace FireGento\FastSimpleImport\Model;
 
+use FireGento\FastSimpleImport\Helper\Config as ConfigHelper;
+use FireGento\FastSimpleImport\Helper\ImportError as ImportErrorHelper;
+use FireGento\FastSimpleImport\Model\Adapters\ImportAdapterFactoryInterface;
 use Magento\ImportExport\Model\Import;
+use Magento\ImportExport\Model\ImportFactory;
 
 class Importer
 {
+    private ImportFactory                          $importModelFactory;
+    private ImportErrorHelper                      $errorHelper;
+    private ImportAdapterFactoryInterface $importAdapterFactory;
+    private ConfigHelper                           $configHelper;
+    private ?bool                                  $validationResult;
+    private ?array                                 $settings;
+    private string                                 $logTrace = '';
     /**
-     * @var \FireGento\FastSimpleImport\Helper\ImportError
+     * @var array|string[]
      */
-    protected $errorHelper;
-    /**
-     * @var
-     */
-    protected $errorMessages;
-    /**
-     * @var \FireGento\FastSimpleImport\Model\Adapters\ImportAdapterFactoryInterface
-     */
-    protected $importAdapterFactory;
-    /**
-     * @var
-     */
-    protected $validationResult;
-    /**
-     * @var \FireGento\FastSimpleImport\Helper\Config
-     */
-    protected $configHelper;
-    /**
-     * @var array
-     */
-    protected $settings;
-    /**
-     * @var string
-     */
-    protected $logTrace = "";
+    private array $errorMessages = [];
 
-    /**
-     * @var \Magento\ImportExport\Model\ImportFactory
-     */
-    private $importModelFactory;
-
-    /**
-     * Importer constructor.
-     * @param \Magento\ImportExport\Model\ImportFactory $importModelFactory
-     * @param \FireGento\FastSimpleImport\Helper\ImportError $errorHelper
-     * @param \FireGento\FastSimpleImport\Model\Adapters\ImportAdapterFactoryInterface $importAdapterFactory
-     * @param \FireGento\FastSimpleImport\Helper\Config $configHelper
-     */
     public function __construct(
-        \Magento\ImportExport\Model\ImportFactory $importModelFactory,
-        \FireGento\FastSimpleImport\Helper\ImportError $errorHelper,
-        \FireGento\FastSimpleImport\Model\Adapters\ImportAdapterFactoryInterface $importAdapterFactory,
-        \FireGento\FastSimpleImport\Helper\Config $configHelper
-    )
-    {
-
+        ImportFactory $importModelFactory,
+        ImportErrorHelper $errorHelper,
+        ImportAdapterFactoryInterface $importAdapterFactory,
+        ConfigHelper $configHelper
+    ) {
         $this->errorHelper = $errorHelper;
         $this->importAdapterFactory = $importAdapterFactory;
         $this->configHelper = $configHelper;
         $this->importModelFactory = $importModelFactory;
         $this->settings = [
-            'entity' => $this->configHelper->getEntity(),
-            'behavior' => $this->configHelper->getBehavior(),
-            'ignore_duplicates' => $this->configHelper->getIgnoreDuplicates(),
-            'validation_strategy' => $this->configHelper->getValidationStrategy(),
-            'allowed_error_count' => $this->configHelper->getAllowedErrorCount(),
-            'import_images_file_dir' => $this->configHelper->getImportFileDir(),
-            'category_path_seperator' => $this->configHelper->getCategoryPathSeperator(),
-            '_import_multiple_value_separator' =>  Import::DEFAULT_GLOBAL_MULTI_VALUE_SEPARATOR
+            'entity'                           => $this->configHelper->getEntity(),
+            'behavior'                         => $this->configHelper->getBehavior(),
+            'ignore_duplicates'                => $this->configHelper->getIgnoreDuplicates(),
+            'validation_strategy'              => $this->configHelper->getValidationStrategy(),
+            'allowed_error_count'              => $this->configHelper->getAllowedErrorCount(),
+            'import_images_file_dir'           => $this->configHelper->getImportFileDir(),
+            '_import_multiple_value_separator' => Import::DEFAULT_GLOBAL_MULTI_VALUE_SEPARATOR,
         ];
     }
 
-    /**
-     * Getter for default Delimiter
-     * @return mixed
-     */
-
-    public function getMultipleValueSeparator()
+    public function processImport(array $dataArray): bool
     {
-        return $this->settings['_import_multiple_value_separator'];
-    }
-
-    /**
-     * Sets the default delimiter
-     * @param $multipleValueSeparator
-     */
-    public function setMultipleValueSeparator($multipleValueSeparator)
-    {
-        $this->settings['_import_multiple_value_separator'] = $multipleValueSeparator;
-    }
-
-    /**
-     * @return Adapters\ImportAdapterFactoryInterface
-     */
-    public function getImportAdapterFactory()
-    {
-        return $this->importAdapterFactory;
-    }
-
-    /**
-     * @param Adapters\ImportAdapterFactoryInterface $importAdapterFactory
-     */
-    public function setImportAdapterFactory($importAdapterFactory)
-    {
-        $this->importAdapterFactory = $importAdapterFactory;
-    }
-
-    public function processImport($dataArray)
-    {
-        $validation = $this->_validateData($dataArray);
+        $validation = $this->validateData($dataArray);
         if ($validation) {
-            $this->_importData();
+            $this->importData();
         }
 
         return $validation;
     }
 
-    protected function _validateData($dataArray)
+    private function validateData(array $dataArray): bool
     {
         $importModel = $this->createImportModel();
-        $source = $this->importAdapterFactory->create(
-            array(
-                'data' => $dataArray,
-                'multipleValueSeparator' => $this->getMultipleValueSeparator()
-            )
-        );
+        $source = $this->importAdapterFactory->create([
+            'data'                   => $dataArray,
+            'multipleValueSeparator' => $this->getMultipleValueSeparator(),
+        ]);
         $this->validationResult = $importModel->validateSource($source);
         $this->addToLogTrace($importModel);
         return $this->validationResult;
     }
 
-    /**
-     * @return \Magento\ImportExport\Model\Import
-     */
-    public function createImportModel()
+    public function createImportModel(): Import
     {
         $importModel = $this->importModelFactory->create();
         $importModel->setData($this->settings);
@@ -148,14 +81,14 @@ class Importer
         $this->logTrace = $this->logTrace . $importModel->getFormatedLogTrace();
     }
 
-    protected function _importData()
+    private function importData()
     {
         $importModel = $this->createImportModel();
         $importModel->importSource();
-        $this->_handleImportResult($importModel);
+        $this->handleImportResult($importModel);
     }
 
-    protected function _handleImportResult($importModel)
+    private function handleImportResult($importModel)
     {
         $errorAggregator = $importModel->getErrorAggregator();
         $this->errorMessages = $this->errorHelper->getImportErrorMessages($errorAggregator);
@@ -165,68 +98,76 @@ class Importer
         }
     }
 
-    /**
-     * @param string $entityCode
-     */
-    public function setEntityCode($entityCode)
+    public function setEntityCode(string $entityCode): self
     {
         $this->settings['entity'] = $entityCode;
-
+        return $this;
     }
 
-    /**
-     * @param string $behavior
-     */
-    public function setBehavior($behavior)
+    public function setBehavior(string $behavior): self
     {
         $this->settings['behavior'] = $behavior;
+        return $this;
     }
 
-    /**
-     * @param string $value
-     */
-    public function setIgnoreDuplicates($value)
+    public function setIgnoreDuplicates(bool $value): self
     {
         $this->settings['ignore_duplicates'] = $value;
+        return $this;
     }
 
-    /**
-     * @param string $strategy
-     */
-    public function setValidationStrategy($strategy)
+    public function setValidationStrategy(string $strategy): self
     {
         $this->settings['validation_strategy'] = $strategy;
+        return $this;
     }
 
-    /**
-     * @param int $count
-     */
-    public function setAllowedErrorCount($count)
+    public function setAllowedErrorCount(int $count): self
     {
         $this->settings['allowed_error_count'] = $count;
+        return $this;
     }
 
-    /**
-     * @param string $dir
-     */
-    public function setImportImagesFileDir($dir)
+    public function setImportImagesFileDir(string $dir): self
     {
         $this->settings['import_images_file_dir'] = $dir;
+        return $this;
     }
 
-    public function getValidationResult()
+    public function setMultipleValueSeparator(string $multipleValueSeparator): self
+    {
+        $this->settings['_import_multiple_value_separator'] = $multipleValueSeparator;
+        return $this;
+    }
+
+    public function setImportAdapterFactory(ImportAdapterFactoryInterface $importAdapterFactory): self
+    {
+        $this->importAdapterFactory = $importAdapterFactory;
+        return $this;
+    }
+
+    public function getValidationResult(): bool
     {
         return $this->validationResult;
     }
 
-    public function getLogTrace()
+    public function getLogTrace(): string
     {
         return $this->logTrace;
     }
 
-    public function getErrorMessages()
+    public function getErrorMessages(): array
     {
         return $this->errorMessages;
     }
 
+    public function getMultipleValueSeparator(): string
+    {
+        return $this->settings['_import_multiple_value_separator'];
+    }
+
+    public function getImportAdapterFactory(): ImportAdapterFactoryInterface
+    {
+        return $this->importAdapterFactory;
+    }
 }

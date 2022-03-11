@@ -56,7 +56,7 @@ master_doc = 'index'
 
 # General information about the project.
 project = u'FireGento_FastSimpleImport2'
-copyright = u'2016, FireGento Team'
+copyright = u'2016 - 2022, FireGento Team'
 author = u'FireGento Team'
 
 # The version info for the project you're documenting, acts as replacement for

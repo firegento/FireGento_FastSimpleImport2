@@ -10,6 +10,10 @@
       "email": "team@firegento.com"
     }
   ],
+  "require": {
+    "php": "^7.4 || ^8.0 || ^8.1",
+    "magento/module-catalog-import-export": "^101.0.0"
+  },
   "autoload": {
     "files": [
       "registration.php"

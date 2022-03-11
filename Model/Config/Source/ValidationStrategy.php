@@ -1,33 +1,37 @@
 <?php
 /**
- * Copyright © 2015 Magento. All rights reserved.
- * See COPYING.txt for license details.
+ * Copyright © 2016 - 2022 FireGento e.V. - All rights reserved.
+ * See LICENSE.md bundled with this module for license details.
  */
+
 namespace FireGento\FastSimpleImport\Model\Config\Source;
+
 use \Magento\ImportExport\Model\Import\ErrorProcessing\ProcessingErrorAggregatorInterface;
+
 class ValidationStrategy implements \Magento\Framework\Option\ArrayInterface
 {
-    /**
-     * Options array
-     *
-     * @var array
-     */
-    protected $_options;
+    private ?array $options;
 
     /**
-     * Return options array
+     * Return available validation strategies
      *
      * @return array
      */
     public function toOptionArray()
     {
-        if (!$this->_options) {
-            $this->_options = [
-                ['value' => ProcessingErrorAggregatorInterface::VALIDATION_STRATEGY_STOP_ON_ERROR, 'label' => __('Stop on Error')], 
-                ['value' => ProcessingErrorAggregatorInterface::VALIDATION_STRATEGY_SKIP_ERRORS, 'label' => __('Skip error entries')], 
+        if ($this->options === null) {
+            $this->options = [
+                [
+                    'value' => ProcessingErrorAggregatorInterface::VALIDATION_STRATEGY_STOP_ON_ERROR,
+                    'label' => __('Stop on Error'),
+                ],
+                [
+                    'value' => ProcessingErrorAggregatorInterface::VALIDATION_STRATEGY_SKIP_ERRORS,
+                    'label' => __('Skip error entries'),
+                ],
             ];
         }
 
-        return $this->_options;
+        return $this->options;
     }
 }

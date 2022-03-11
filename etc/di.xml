@@ -7,7 +7,7 @@
  -->
 <config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xsi:noNamespaceSchemaLocation="urn:magento:framework:ObjectManager/etc/config.xsd">
-    <preference for="\FireGento\FastSimpleImport\Model\Adapters\ImportAdapterFactoryInterface"
+    <preference for="FireGento\FastSimpleImport\Model\Adapters\ImportAdapterFactoryInterface"
                 type="FireGento\FastSimpleImport\Model\Adapters\ArrayAdapterFactory"/>
     <preference for="Magento\ImportExport\Model\ResourceModel\Import\Data"
                 type="FireGento\FastSimpleImport\ResourceModel\ImportData"/>

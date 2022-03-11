@@ -1,81 +1,55 @@
 <?php
 /**
- * Copyright © 2016 FireGento e.V. - All rights reserved.
+ * Copyright © 2016 - 2022 FireGento e.V. - All rights reserved.
  * See LICENSE.md bundled with this module for license details.
  */
 namespace FireGento\FastSimpleImport\Helper;
 
-use Magento\Store\Model\ScopeInterface;
+use Magento\Framework\App\Helper\AbstractHelper;
+use Magento\Framework\App\Helper\Context;
 
-class Config extends \Magento\Framework\App\Helper\AbstractHelper
+class Config extends AbstractHelper
 {
+    private const XML_PATH_IGNORE_DUPLICATES       = 'fastsimpleimport/default/ignore_duplicates';
+    private const XML_PATH_BEHAVIOR                = 'fastsimpleimport/default/behavior';
+    private const XML_PATH_ENTITY                  = 'fastsimpleimport/default/entity';
+    private const XML_PATH_VALIDATION_STRATEGY     = 'fastsimpleimport/default/validation_strategy';
+    private const XML_PATH_ALLOWED_ERROR_COUNT     = 'fastsimpleimport/default/allowed_error_count';
+    private const XML_PATH_IMPORT_IMAGES_FILE_FIR  = 'fastsimpleimport/default/import_images_file_dir';
 
-    const XML_PATH_IGNORE_DUPLICATES      = 'fastsimpleimport/default/ignore_duplicates';
-    const XML_PATH_BEHAVIOR               = 'fastsimpleimport/default/behavior';
-    const XML_PATH_ENTITY                 = 'fastsimpleimport/default/entity';
-    const XML_PATH_VALIDATION_STRATEGY    = 'fastsimpleimport/default/validation_strategy';
-    const XML_PATH_ALLOWED_ERROR_COUNT    = 'fastsimpleimport/default/allowed_error_count';
-    const XML_PATH_IMPORT_IMAGES_FILE_FIR = 'fastsimpleimport/default/import_images_file_dir';
-    const XML_PATH_CATEGORY_PATH_SEPERATOR = 'fastsimpleimport/default/category_path_seperator';
-
-    /**
-     * @param \Magento\Framework\App\Helper\Context $context
-     */
     public function __construct(
-        \Magento\Framework\App\Helper\Context $context
+        Context $context
     ) {
         parent::__construct($context);
     }
 
-    public function getCategoryPathSeperator() {
-        return $this->scopeConfig->getValue(self::XML_PATH_CATEGORY_PATH_SEPERATOR, ScopeInterface::SCOPE_STORE);
+    public function getIgnoreDuplicates(): bool
+    {
+        return $this->scopeConfig->isSetFlag(self::XML_PATH_IGNORE_DUPLICATES);
     }
 
-    /**
-     * @return string
-     */
-    public function getIgnoreDuplicates()
+    public function getBehavior(): string
     {
-        return $this->scopeConfig->getValue(self::XML_PATH_IGNORE_DUPLICATES, ScopeInterface::SCOPE_STORE);
+        return $this->scopeConfig->getValue(self::XML_PATH_BEHAVIOR);
     }
 
-    /**
-     * @return string
-     */
-    public function getBehavior()
+    public function getEntity(): string
     {
-        return $this->scopeConfig->getValue(self::XML_PATH_BEHAVIOR, ScopeInterface::SCOPE_STORE);
+        return $this->scopeConfig->getValue(self::XML_PATH_ENTITY);
     }
 
-    /**
-     * @return string
-     */
-    public function getEntity()
+    public function getValidationStrategy(): string
     {
-        return $this->scopeConfig->getValue(self::XML_PATH_ENTITY, ScopeInterface::SCOPE_STORE);
+        return $this->scopeConfig->getValue(self::XML_PATH_VALIDATION_STRATEGY);
     }
 
-    /**
-     * @return string
-     */
-    public function getValidationStrategy()
+    public function getAllowedErrorCount(): int
     {
-        return $this->scopeConfig->getValue(self::XML_PATH_VALIDATION_STRATEGY, ScopeInterface::SCOPE_STORE);
+        return (int) $this->scopeConfig->getValue(self::XML_PATH_ALLOWED_ERROR_COUNT);
     }
 
-    /**
-     * @return string
-     */
-    public function getAllowedErrorCount()
+    public function getImportFileDir(): string
     {
-        return $this->scopeConfig->getValue(self::XML_PATH_ALLOWED_ERROR_COUNT, ScopeInterface::SCOPE_STORE);
-    }
-
-    /**
-     * @return string
-     */
-    public function getImportFileDir()
-    {
-        return $this->scopeConfig->getValue(self::XML_PATH_IMPORT_IMAGES_FILE_FIR, ScopeInterface::SCOPE_STORE);
+        return $this->scopeConfig->getValue(self::XML_PATH_IMPORT_IMAGES_FILE_FIR);
     }
 }

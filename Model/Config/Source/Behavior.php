@@ -1,34 +1,32 @@
 <?php
 /**
- * Copyright © 2015 Magento. All rights reserved.
- * See COPYING.txt for license details.
+ * Copyright © 2016 - 2022 FireGento e.V. - All rights reserved.
+ * See LICENSE.md bundled with this module for license details.
  */
+
 namespace FireGento\FastSimpleImport\Model\Config\Source;
+
+use Magento\ImportExport\Model\Import;
 
 class Behavior implements \Magento\Framework\Option\ArrayInterface
 {
-    /**
-     * Options array
-     *
-     * @var array
-     */
-    protected $_options;
+    private ?array $options;
 
     /**
-     * Return options array
+     * Return available behaviors
      *
      * @return array
      */
     public function toOptionArray()
     {
-        if (!$this->_options) {
-            $this->_options = [
-                ['value' => \Magento\ImportExport\Model\Import::BEHAVIOR_APPEND, 'label' => __('Add/Update')], 
-                ['value' => \Magento\ImportExport\Model\Import::BEHAVIOR_REPLACE, 'label' => __('Replace')], 
-                ['value' => \Magento\ImportExport\Model\Import::BEHAVIOR_DELETE, 'label' => __('Delete')], 
+        if ($this->options === null) {
+            $this->options = [
+                ['value' => Import::BEHAVIOR_APPEND, 'label' => __('Add/Update')],
+                ['value' => Import::BEHAVIOR_REPLACE, 'label' => __('Replace')],
+                ['value' => Import::BEHAVIOR_DELETE, 'label' => __('Delete')],
             ];
         }
 
-        return $this->_options;
+        return $this->options;
     }
 }
