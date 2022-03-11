@@ -111,6 +111,13 @@ class ArrayAdapter extends AbstractSource
         unset($this->array[$this->position][$key]);
     }
 
+    /**
+     * Render next row
+     *
+     * Return array or false on error
+     *
+     * @return array|false
+     */
     protected function _getNextRow()
     {
         $this->next();

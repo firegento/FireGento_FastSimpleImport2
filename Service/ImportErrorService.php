@@ -4,55 +4,46 @@
  * See LICENSE.md bundled with this module for license details.
  */
 
-namespace FireGento\FastSimpleImport\Helper;
+namespace FireGento\FastSimpleImport\Service;
 
 use Magento\ImportExport\Model\Import\Entity\AbstractEntity;
 use Magento\ImportExport\Model\Import\ErrorProcessing\ProcessingError;
 use Magento\ImportExport\Model\Import\ErrorProcessing\ProcessingErrorAggregatorInterface;
 
-class ImportError extends \Magento\Framework\App\Helper\AbstractHelper
+class ImportErrorService extends \Magento\Framework\App\Helper\AbstractHelper
 {
     private const LIMIT_ERRORS_MESSAGE = 100;
 
+    public function getImportErrorMessagesAsString(ProcessingErrorAggregatorInterface $errorAggregator): string
+    {
+        return implode("\n", $this->getImportErrorMessages($errorAggregator));
+    }
+
     /**
-     * TODO: Refactor Code
-     *
      * @param ProcessingErrorAggregatorInterface $errorAggregator
-     * @return string
+     * @return array|string[]
      */
-    public function getImportErrorMessages(
-        ProcessingErrorAggregatorInterface $errorAggregator
-    ) {
-        $resultText = '';
+    public function getImportErrorMessages(ProcessingErrorAggregatorInterface $errorAggregator): array
+    {
+        $result = [];
         if ($errorAggregator->getErrorsCount()) {
-            $message = '';
             $counter = 0;
-            foreach ($this->getErrorMessages($errorAggregator) as $error) {
-                $message .= ++$counter . '. ' . $error . '<br>';
+            foreach ($this->getErrorMessages($errorAggregator) as $errorMessage) {
+                $result[] = $errorMessage;
                 if ($counter >= self::LIMIT_ERRORS_MESSAGE) {
+                    $result[] = __('Aborted after %1 errors.', self::LIMIT_ERRORS_MESSAGE);
                     break;
                 }
             }
             if ($errorAggregator->hasFatalExceptions()) {
-                foreach ($this->getSystemExceptions($errorAggregator) as $error) {
-                    $message .= $error->getErrorMessage() . __('Additional data') . ': ' . $error->getErrorDescription()
-                        . '</div>';
-                }
-            }
-            try {
-                $resultText .= '<strong>' . __('Following Error(s) has been occurred during importing process:')
-                    . '</strong><br>' . '<div class="import-error-wrapper">' . __(
-                        'Only first 100 errors are displayed here. '
-                    ) . '<a href="' . '">' . __('Download full report') . '</a><br>' . '<div class="import-error-list">'
-                    . $message . '</div></div>';
-            } catch (\Exception $e) {
-                foreach ($this->getErrorMessages($errorAggregator) as $errorMessage) {
-                    $resultText .= $errorMessage;
+                foreach ($this->getSystemExceptions($errorAggregator) as $processingError) {
+                    $result[] = $processingError->getErrorMessage() .
+                        __('Additional data') . ': ' . $processingError->getErrorDescription();
                 }
             }
         }
 
-        return $resultText;
+        return $result;
     }
 
     /**

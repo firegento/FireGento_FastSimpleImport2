@@ -6,96 +6,105 @@
 
 namespace FireGento\FastSimpleImport\Model;
 
-use FireGento\FastSimpleImport\Helper\Config as ConfigHelper;
-use FireGento\FastSimpleImport\Helper\ImportError as ImportErrorHelper;
+use FireGento\FastSimpleImport\Exception\ImportException;
+use FireGento\FastSimpleImport\Exception\ValidationException;
 use FireGento\FastSimpleImport\Model\Adapters\ImportAdapterFactoryInterface;
+use FireGento\FastSimpleImport\Service\ImportErrorService as ImportErrorService;
 use Magento\ImportExport\Model\Import;
 use Magento\ImportExport\Model\ImportFactory;
 
 class Importer
 {
-    private ImportFactory                          $importModelFactory;
-    private ImportErrorHelper                      $errorHelper;
+    private ImportFactory                 $importModelFactory;
+    private ImportErrorService            $importErrorService;
     private ImportAdapterFactoryInterface $importAdapterFactory;
-    private ConfigHelper                           $configHelper;
-    private ?bool                                  $validationResult;
-    private ?array                                 $settings;
-    private string                                 $logTrace = '';
-    /**
-     * @var array|string[]
-     */
-    private array $errorMessages = [];
+    private Config                        $config;
+    private ?bool                         $validationResult;
+    private ?array                        $settings;
+    private string                        $logTrace      = '';
+    private array                         $errorMessages = [];
+    private ?Import                       $importModel = null;
 
     public function __construct(
         ImportFactory $importModelFactory,
-        ImportErrorHelper $errorHelper,
+        ImportErrorService $importErrorService,
         ImportAdapterFactoryInterface $importAdapterFactory,
-        ConfigHelper $configHelper
+        Config $config
     ) {
-        $this->errorHelper = $errorHelper;
+        $this->importErrorService = $importErrorService;
         $this->importAdapterFactory = $importAdapterFactory;
-        $this->configHelper = $configHelper;
+        $this->config = $config;
         $this->importModelFactory = $importModelFactory;
         $this->settings = [
-            'entity'                           => $this->configHelper->getEntity(),
-            'behavior'                         => $this->configHelper->getBehavior(),
-            'ignore_duplicates'                => $this->configHelper->getIgnoreDuplicates(),
-            'validation_strategy'              => $this->configHelper->getValidationStrategy(),
-            'allowed_error_count'              => $this->configHelper->getAllowedErrorCount(),
-            'import_images_file_dir'           => $this->configHelper->getImportFileDir(),
+            'entity'                           => $this->config->getEntity(),
+            'behavior'                         => $this->config->getBehavior(),
+            'ignore_duplicates'                => $this->config->getIgnoreDuplicates(),
+            'validation_strategy'              => $this->config->getValidationStrategy(),
+            'allowed_error_count'              => $this->config->getAllowedErrorCount(),
             '_import_multiple_value_separator' => Import::DEFAULT_GLOBAL_MULTI_VALUE_SEPARATOR,
         ];
     }
 
-    public function processImport(array $dataArray): bool
+    /**
+     * @throws ValidationException
+     * @throws ImportException
+     */
+    public function processImport(array $dataArray): void
     {
-        $validation = $this->validateData($dataArray);
-        if ($validation) {
-            $this->importData();
-        }
-
-        return $validation;
+        $this->validateData($dataArray);
+        $this->importData();
     }
 
-    private function validateData(array $dataArray): bool
+    /**
+     * @throws ValidationException
+     */
+    private function validateData(array $dataArray): void
     {
-        $importModel = $this->createImportModel();
+        $importModel = $this->getImportModel();
         $source = $this->importAdapterFactory->create([
             'data'                   => $dataArray,
             'multipleValueSeparator' => $this->getMultipleValueSeparator(),
         ]);
         $this->validationResult = $importModel->validateSource($source);
-        $this->addToLogTrace($importModel);
-        return $this->validationResult;
+        $errorAggregator = $importModel->getErrorAggregator();
+        if (!empty($errorAggregator->getAllErrors())) {
+            throw new ValidationException(
+                $this->importErrorService->getImportErrorMessagesAsString($errorAggregator)
+            );
+        }
     }
 
-    public function createImportModel(): Import
-    {
-        $importModel = $this->importModelFactory->create();
-        $importModel->setData($this->settings);
-        return $importModel;
-    }
-
-    public function addToLogTrace($importModel)
-    {
-        $this->logTrace = $this->logTrace . $importModel->getFormatedLogTrace();
-    }
-
+    /**
+     * @throws ImportException
+     */
     private function importData()
     {
-        $importModel = $this->createImportModel();
+        $importModel = $this->getImportModel();
         $importModel->importSource();
         $this->handleImportResult($importModel);
     }
 
-    private function handleImportResult($importModel)
+    /**
+     * @throws ImportException
+     */
+    private function handleImportResult(Import $importModel)
     {
         $errorAggregator = $importModel->getErrorAggregator();
-        $this->errorMessages = $this->errorHelper->getImportErrorMessages($errorAggregator);
-        $this->addToLogTrace($importModel);
+        $this->errorMessages = $this->importErrorService->getImportErrorMessages($errorAggregator);
         if (!$importModel->getErrorAggregator()->hasToBeTerminated()) {
             $importModel->invalidateIndex();
+        } elseif (!empty($this->errorMessages)) {
+            throw new ImportException($this->importErrorService->getImportErrorMessagesAsString($errorAggregator));
         }
+    }
+
+    public function getImportModel(): Import
+    {
+        if ($this->importModel === null) {
+            $this->importModel = $this->importModelFactory->create();
+            $this->importModel->setData($this->settings);
+        }
+        return $this->importModel;
     }
 
     public function setEntityCode(string $entityCode): self

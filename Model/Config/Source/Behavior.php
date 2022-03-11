@@ -21,7 +21,8 @@ class Behavior implements \Magento\Framework\Option\ArrayInterface
     {
         if ($this->options === null) {
             $this->options = [
-                ['value' => Import::BEHAVIOR_APPEND, 'label' => __('Add/Update')],
+                ['value' => Import::BEHAVIOR_APPEND, 'label' => __('Append')],
+                ['value' => Import::BEHAVIOR_ADD_UPDATE, 'label' => __('Add/Update')],
                 ['value' => Import::BEHAVIOR_REPLACE, 'label' => __('Replace')],
                 ['value' => Import::BEHAVIOR_DELETE, 'label' => __('Delete')],
             ];

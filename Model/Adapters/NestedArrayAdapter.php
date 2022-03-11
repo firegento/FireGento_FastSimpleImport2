@@ -10,7 +10,7 @@ class NestedArrayAdapter extends ArrayAdapter
 {
     private string $multipleValueSeparator;
 
-    public function __construct(array $data, string $multipleValueSeparator = ',')
+    public function __construct(array $data, string $multipleValueSeparator = ', ')
     {
         $this->multipleValueSeparator = $multipleValueSeparator;
 
@@ -31,7 +31,7 @@ class NestedArrayAdapter extends ArrayAdapter
     private function convertToArray(array &$line)
     {
         $implodeStr = $this->multipleValueSeparator;
-        $arr = array_map(
+        $array = array_map(
             function ($value, $key) use (&$implodeStr) {
                 if (is_array($value) && is_numeric($key)) {
                     $this->convertToArray($value);
@@ -44,6 +44,6 @@ class NestedArrayAdapter extends ArrayAdapter
             array_keys($line)
         );
 
-        $line = implode($implodeStr, $arr);
+        $line = implode($implodeStr, $array);
     }
 }
