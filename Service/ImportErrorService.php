@@ -10,7 +10,7 @@ use Magento\ImportExport\Model\Import\Entity\AbstractEntity;
 use Magento\ImportExport\Model\Import\ErrorProcessing\ProcessingError;
 use Magento\ImportExport\Model\Import\ErrorProcessing\ProcessingErrorAggregatorInterface;
 
-class ImportErrorService extends \Magento\Framework\App\Helper\AbstractHelper
+class ImportErrorService
 {
     private const LIMIT_ERRORS_MESSAGE = 100;
 

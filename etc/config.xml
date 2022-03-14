@@ -9,12 +9,15 @@
     <default>
         <fastsimpleimport>
             <default>
-                <ignore_duplicates>0</ignore_duplicates>
                 <behavior>append</behavior>
                 <entity>catalog_product</entity>
                 <validation_strategy>validation-stop-on-errors</validation_strategy>
-                <allowed_error_count>10</allowed_error_count>
+                <allowed_error_count>0</allowed_error_count>
+                <ignore_duplicates>0</ignore_duplicates>
             </default>
+            <database>
+                <import_temp_table>1</import_temp_table>
+            </database>
         </fastsimpleimport>
     </default>
 </config>

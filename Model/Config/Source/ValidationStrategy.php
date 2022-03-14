@@ -10,7 +10,7 @@ use \Magento\ImportExport\Model\Import\ErrorProcessing\ProcessingErrorAggregator
 
 class ValidationStrategy implements \Magento\Framework\Option\ArrayInterface
 {
-    private ?array $options;
+    private ?array $options = null;
 
     /**
      * Return available validation strategies

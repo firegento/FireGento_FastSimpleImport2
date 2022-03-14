@@ -25,12 +25,13 @@
                     <label>Validation Strategy</label>
                     <source_model>FireGento\FastSimpleImport\Model\Config\Source\ValidationStrategy</source_model>
                 </field>
-                <field id="allowed_error_count" translate="label" type="text" sortOrder="40" showInDefault="1" showInWebsite="0" showInStore="0">
+                <field id="allowed_error_count" translate="label comment" type="text" sortOrder="40" showInDefault="1" showInWebsite="0" showInStore="0">
                     <label>Allowed Error Count</label>
+                    <comment>Only non-fatal errors - import will always stop if any fatal errors occur.</comment>
                     <frontend_class>validate-number</frontend_class>
-                </field>
-                <field id="import_images_file_dir" translate="label" type="text" sortOrder="50" showInDefault="1" showInWebsite="0" showInStore="0">
-                    <label>Import Images Directory</label>
+                    <depends>
+                        <field id="validation_strategy">validation-stop-on-errors</field>
+                    </depends>
                 </field>
                 <field id="ignore_duplicates" translate="label" type="select" sortOrder="60" showInDefault="1" showInWebsite="0" showInStore="0">
                     <label>Ignore duplicates</label>

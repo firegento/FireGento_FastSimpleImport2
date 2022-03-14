@@ -10,7 +10,7 @@ use Magento\ImportExport\Model\Import;
 
 class Behavior implements \Magento\Framework\Option\ArrayInterface
 {
-    private ?array $options;
+    private ?array $options = null;
 
     /**
      * Return available behaviors
