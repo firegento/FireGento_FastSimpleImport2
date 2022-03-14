@@ -185,16 +185,6 @@ class Importer
     /**
      * @throws RuntimeException
      */
-    public function setImportImagesFileDir(string $dir): self
-    {
-        $this->assertImportModelNotInitialized();
-        $this->settings['import_images_file_dir'] = $dir;
-        return $this;
-    }
-
-    /**
-     * @throws RuntimeException
-     */
     public function setMultipleValueSeparator(string $multipleValueSeparator): self
     {
         $this->assertImportModelNotInitialized();
