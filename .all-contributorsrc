@@ -117,6 +117,15 @@
       "contributions": [
         "doc"
       ]
+    },
+    {
+      "login": "sprankhub",
+      "name": "Simon Sprankel",
+      "avatar_url": "https://avatars.githubusercontent.com/u/930199?v=4",
+      "profile": "https://github.com/sprankhub",
+      "contributions": [
+        "code"
+      ]
     }
   ],
   "contributorsPerLine": 7
