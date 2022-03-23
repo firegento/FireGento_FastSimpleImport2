@@ -14,6 +14,6 @@ Installation Instructions for the latest development/contribution Version
 ---------------------------------------------
 
     composer config repositories.firegento_fastsimpleimport vcs https://github.com/firegento/FireGento_FastSimpleImport2
-    composer require firegento/fastsimpleimport dev-develop
+    composer require firegento/fastsimpleimport
     bin/magento module:enable FireGento_FastSimpleImport
     bin/magento setup:upgrade
