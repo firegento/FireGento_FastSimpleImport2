@@ -46,6 +46,7 @@ Thanks goes to these wonderful people ([emoji key](https://allcontributors.org/d
     <td align="center"><a href="https://github.com/dcole-inviqa"><img src="https://avatars0.githubusercontent.com/u/6168391?v=4" width="100px;" alt=""/><br /><sub><b>dcole-inviqa</b></sub></a><br /><a href="https://github.com/firegento/FireGento_FastSimpleImport2/commits?author=dcole-inviqa" title="Code">💻</a></td>
     <td align="center"><a href="https://github.com/VincentMarmiesse"><img src="https://avatars0.githubusercontent.com/u/1949412?v=4" width="100px;" alt=""/><br /><sub><b>Vincent MARMIESSE</b></sub></a><br /><a href="https://github.com/firegento/FireGento_FastSimpleImport2/commits?author=VincentMarmiesse" title="Code">💻</a></td>
     <td align="center"><a href="https://github.com/kkrieger85"><img src="https://avatars2.githubusercontent.com/u/4435523?v=4" width="100px;" alt=""/><br /><sub><b>Kevin Krieger</b></sub></a><br /><a href="https://github.com/firegento/FireGento_FastSimpleImport2/commits?author=kkrieger85" title="Documentation">📖</a></td>
+    <td align="center"><a href="https://github.com/sprankhub"><img src="https://avatars.githubusercontent.com/u/930199?v=4" width="100px;" alt=""/><br /><sub><b>Simon Sprankel</b></sub></a><br /><a href="https://github.com/firegento/FireGento_FastSimpleImport2/commits?author=sprankhub" title="Code">💻</a></td>
   </tr>
 </table>
 
