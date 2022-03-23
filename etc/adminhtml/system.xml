@@ -37,6 +37,9 @@
                     <label>Ignore duplicates</label>
                     <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
                 </field>
+                <field id="category_path_seperator" translate="label" type="text" sortOrder="70" showInDefault="1" showInWebsite="0" showInStore="0">
+                    <label>Category path seperator</label>
+                </field>
             </group>
             <group id="database" translate="label" sortOrder="2" showInDefault="1" showInWebsite="0" showInStore="0">
                 <label>Database settings</label>

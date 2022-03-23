@@ -14,6 +14,7 @@ Contents:
 
    Installation
    Products
+   Category
    Fieldnames
 
 
