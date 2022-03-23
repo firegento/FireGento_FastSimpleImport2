@@ -13,7 +13,7 @@ See [http://firegento-fastsimpleimport2.readthedocs.io/en/latest/](http://firege
 ## Requirements
 
 - Magento >= 2.3.0
-- PHP >= 5.7.0
+- PHP >= 7.4.0
 
 ## Support
 
