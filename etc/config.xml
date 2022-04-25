@@ -14,6 +14,7 @@
                 <validation_strategy>validation-stop-on-errors</validation_strategy>
                 <allowed_error_count>0</allowed_error_count>
                 <ignore_duplicates>0</ignore_duplicates>
+                <category_path_seperator>/</category_path_seperator>
             </default>
             <database>
                 <import_temp_table>1</import_temp_table>
