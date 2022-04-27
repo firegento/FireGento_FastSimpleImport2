@@ -117,9 +117,6 @@ class Category extends \Magento\ImportExport\Model\Import\AbstractEntity
      */
     private ?string $entityTable = null;
 
-    /**
-     * Attributes with index (not label) value.
-     */
     private array $indexValueAttributes = [
         'default_sort_by',
         CategoryInterface::KEY_AVAILABLE_SORT_BY,
@@ -335,7 +332,13 @@ class Category extends \Magento\ImportExport\Model\Import\AbstractEntity
 
         if ($attribute->usesSource()) {
             // should attribute has index (option value) instead of a label?
-            $index = in_array($attribute->getAttributeCode(), $this->indexValueAttributes) ? 'value' : 'label';
+            $index = 'label';
+            if (
+                in_array($attribute->getAttributeCode(), $this->indexValueAttributes) ||
+                $attribute->getSourceModel() == "Magento\Eav\Model\Entity\Attribute\Source\Boolean"
+            ) {
+                $index = 'value';
+            };
 
             // only default (admin) store values used
             /** @var Attribute $attribute */
