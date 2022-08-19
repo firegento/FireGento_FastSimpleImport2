@@ -800,8 +800,8 @@ class Category extends \Magento\ImportExport\Model\Import\AbstractEntity
     protected function reindexUpdatedCategories($categoryId)
     {
         /** @var $category \Magento\Catalog\Model\Category */
-        $category = $this->defaultCategory->load($categoryId);
-        //$categoryName = $category->getName();
+        $category = $this->categoryRepository->get($categoryId);
+        
         foreach ($category->getStoreIds() as $storeId) {
             if ($storeId == 0) {
                 continue;
