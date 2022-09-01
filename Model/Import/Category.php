@@ -1063,7 +1063,7 @@ class Category extends \Magento\ImportExport\Model\Import\AbstractEntity
      * @param string $string
      * @return array
      */
-    protected function explodeEscaped($delimiter = '/', $string)
+    protected function explodeEscaped($delimiter, $string)
     {
         $exploded = explode($delimiter, $string);
         $fixed = [];
