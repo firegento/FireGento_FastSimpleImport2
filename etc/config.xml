@@ -10,7 +10,7 @@
         <fastsimpleimport>
             <default>
                 <ignore_duplicates>0</ignore_duplicates>
-                <behavior>append</behavior>
+                <behavior>add_update</behavior>
                 <entity>catalog_product</entity>
                 <validation_strategy>validation-stop-on-errors</validation_strategy>
                 <allowed_error_count>10</allowed_error_count>
