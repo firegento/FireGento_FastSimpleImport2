@@ -199,7 +199,7 @@ class Category extends \Magento\ImportExport\Model\Import\AbstractEntity
     private $symbolIgnoreFields = false;
 
     private int $defaultAttributeSetId = 0;
-    private CategoryImportVersion $categoryImportVersionFeature;
+    private ?CategoryImportVersion $categoryImportVersionFeature;
     private ?Uploader $fileUploader = null;
     private DirectoryWriteInterface $mediaDirectory;
     private StoreManagerInterface $storeManager;
@@ -383,7 +383,7 @@ class Category extends \Magento\ImportExport\Model\Import\AbstractEntity
                 }
 
                 $index = $this->implodeEscaped(
-                    $this->_scopeConfig->getValue(Config::XML_PATH_CATEGORY_PATH_SEPERATOR),
+                    (string) $this->_scopeConfig->getValue(Config::XML_PATH_CATEGORY_PATH_SEPERATOR),
                     $path
                 );
                 $this->categoriesWithRoots[$rootCategoryName][$index] = [
@@ -861,13 +861,13 @@ class Category extends \Magento\ImportExport\Model\Import\AbstractEntity
         }
 
         $categoryParts = $this->explodeEscaped(
-            $this->_scopeConfig->getValue(Config::XML_PATH_CATEGORY_PATH_SEPERATOR),
+            (string) $this->_scopeConfig->getValue(Config::XML_PATH_CATEGORY_PATH_SEPERATOR),
             $rowData[self::COL_CATEGORY]
         );
         return end($categoryParts);
     }
 
-    private function explodeEscaped(string $delimiter = '/', string $string): array
+    private function explodeEscaped(string $delimiter, string $string): array
     {
         $exploded = explode($delimiter, $string);
         $fixed = [];
@@ -911,12 +911,12 @@ class Category extends \Magento\ImportExport\Model\Import\AbstractEntity
             $parent = $categoryParts[count($categoryParts) - 2];
         } else {
             $categoryParts = $this->explodeEscaped(
-                $this->_scopeConfig->getValue(Config::XML_PATH_CATEGORY_PATH_SEPERATOR),
+                (string) $this->_scopeConfig->getValue(Config::XML_PATH_CATEGORY_PATH_SEPERATOR),
                 $rowData[self::COL_CATEGORY]
             );
             array_pop($categoryParts);
             $parent = $this->implodeEscaped(
-                $this->_scopeConfig->getValue(Config::XML_PATH_CATEGORY_PATH_SEPERATOR),
+                (string) $this->_scopeConfig->getValue(Config::XML_PATH_CATEGORY_PATH_SEPERATOR),
                 $categoryParts
             );
         }
@@ -1170,7 +1170,9 @@ class Category extends \Magento\ImportExport\Model\Import\AbstractEntity
     private function saveCategoryEntity(array $entityRowsIn, array $entityRowsUp): self
     {
         if ($entityRowsIn) {
-            $entityRowsIn = $this->categoryImportVersionFeature->processCategory($entityRowsIn);
+            if ($this->categoryImportVersionFeature !== null) {
+                $entityRowsIn = $this->categoryImportVersionFeature->processCategory($entityRowsIn);
+            }
 
             $this->_connection->insertMultiple($this->entityTable, $entityRowsIn);
         }
@@ -1197,7 +1199,11 @@ class Category extends \Magento\ImportExport\Model\Import\AbstractEntity
      */
     private function saveCategoryAttributes(array $attributesData): self
     {
-        $entityFieldName = $this->categoryImportVersionFeature->getEntityFieldName();
+        if ($this->categoryImportVersionFeature !== null) {
+            $entityFieldName = $this->categoryImportVersionFeature->getEntityFieldName();
+        } else {
+            $entityFieldName = 'entity_id';
+        }
 
         $entityIds = array();
 

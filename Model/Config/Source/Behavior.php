@@ -14,10 +14,8 @@ class Behavior implements \Magento\Framework\Option\ArrayInterface
 
     /**
      * Return available behaviors
-     *
-     * @return array
      */
-    public function toOptionArray()
+    public function toOptionArray(): array
     {
         if ($this->options === null) {
             $this->options = [

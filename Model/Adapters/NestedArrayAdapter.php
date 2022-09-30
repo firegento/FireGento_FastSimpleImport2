@@ -26,9 +26,9 @@ class NestedArrayAdapter extends ArrayAdapter
     }
 
     /**
-     * Transform nested array to string
+     * Transform nested array to flat array of strings
      */
-    private function convertToArray(array &$line)
+    private function convertToArray(array &$line): void
     {
         $implodeStr = $this->multipleValueSeparator;
         $array = array_map(
