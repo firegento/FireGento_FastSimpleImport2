@@ -616,7 +616,7 @@ class Category extends \Magento\ImportExport\Model\Import\AbstractEntity
      * @return $this
      * @throws \Exception
      */
-    private function reindexUpdatedCategories($categoryId)
+    protected function reindexUpdatedCategories($categoryId)
     {
         /** @var $category CategoryModel */
         $category = $this->defaultCategory->load($categoryId);
