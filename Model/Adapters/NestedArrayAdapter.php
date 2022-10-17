@@ -1,46 +1,37 @@
 <?php
 /**
- * *
- *  * Copyright © Elias Kotlyar - All rights reserved.
- *  * See LICENSE.md bundled with this module for license details.
- *
+ * @copyright © 2016 - 2022 FireGento e.V. - All rights reserved.
+ * @license https://opensource.org/licenses/GPL-3.0 GPL-3
  */
+
 namespace FireGento\FastSimpleImport\Model\Adapters;
 
 class NestedArrayAdapter extends ArrayAdapter
 {
-    protected $multipleValueSeparator;
+    private string $multipleValueSeparator;
 
-    /**
-     * ArrayAdapter constructor.
-     * @param array $data
-     * @param string $multipleValueSeparator
-     */
-    public function __construct($data, $multipleValueSeparator = ', ')
+    public function __construct(array $data, string $multipleValueSeparator = ', ')
     {
         $this->multipleValueSeparator = $multipleValueSeparator;
 
         parent::__construct($data);
-        foreach ($this->_array as &$row) {
-            foreach ($row as $colName => &$value)
+
+        foreach ($this->array as &$row) {
+            foreach ($row as &$value) {
                 if (is_array($value)) {
                     $this->convertToArray($value);
                 }
+            }
         }
-        //print_r($this->_array);
-
     }
 
     /**
-     * Transform nested array to string
-     *
-     * @param array $line
-     * @return void
+     * Transform nested array to flat array of strings
      */
-    protected function convertToArray(&$line)
+    private function convertToArray(array &$line): void
     {
         $implodeStr = $this->multipleValueSeparator;
-        $arr = array_map(
+        $array = array_map(
             function ($value, $key) use (&$implodeStr) {
                 if (is_array($value) && is_numeric($key)) {
                     $this->convertToArray($value);
@@ -53,8 +44,6 @@ class NestedArrayAdapter extends ArrayAdapter
             array_keys($line)
         );
 
-        $line = implode(
-            $implodeStr, $arr
-        );
+        $line = implode($implodeStr, $array);
     }
 }

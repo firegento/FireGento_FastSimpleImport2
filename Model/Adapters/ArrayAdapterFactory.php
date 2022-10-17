@@ -1,30 +1,28 @@
 <?php
 /**
- * Copyright © 2016 FireGento e.V. - All rights reserved.
- * See LICENSE.md bundled with this module for license details.
+ * @copyright © 2016 - 2022 FireGento e.V. - All rights reserved.
+ * @license https://opensource.org/licenses/GPL-3.0 GPL-3
  */
+
 namespace FireGento\FastSimpleImport\Model\Adapters;
+
+use Magento\Framework\ObjectManagerInterface;
+
 class ArrayAdapterFactory implements ImportAdapterFactoryInterface
 {
-    protected $_objectManager = null;
-
-    protected $_instanceName = null;
+    private ObjectManagerInterface $objectManager;
+    private string                 $instanceName;
 
     public function __construct(
-        \Magento\Framework\ObjectManagerInterface $objectManager,
-        $instanceName = 'FireGento\FastSimpleImport\Model\Adapters\ArrayAdapter'
-    )
-    {
-        $this->_objectManager = $objectManager;
-        $this->_instanceName = $instanceName;
+        ObjectManagerInterface $objectManager,
+        $instanceName = ArrayAdapter::class
+    ) {
+        $this->objectManager = $objectManager;
+        $this->instanceName = $instanceName;
     }
 
-    /**
-     * @param array $data
-     * @return \FireGento\FastSimpleImport\Model\Adapters\ArrayAdapter
-     */
-    public function create(array $data = [])
+    public function create(array $data = []): ArrayAdapter
     {
-        return $this->_objectManager->create($this->_instanceName, $data);
+        return $this->objectManager->create($this->instanceName, $data);
     }
 }

@@ -1,108 +1,89 @@
 <?php
 /**
- * Copyright © 2016 FireGento e.V. - All rights reserved.
- * See LICENSE.md bundled with this module for license details.
+ * @copyright © 2016 - 2022 FireGento e.V. - All rights reserved.
+ * @license https://opensource.org/licenses/GPL-3.0 GPL-3
  */
+
 namespace FireGento\FastSimpleImport\Model\Adapters;
-class ArrayAdapter extends \Magento\ImportExport\Model\Import\AbstractSource
+
+use Magento\ImportExport\Model\Import\AbstractSource;
+
+class ArrayAdapter extends AbstractSource
 {
-    /**
-     * @var int
-     */
-    protected $_position = 0;
+    private int     $position = 0;
+    protected array $array    = [];
 
-    /**
-     * @var array The Data; Array of Array
-     */
-    protected $_array = array();
-
-    /**
-     * Go to given position and check if it is valid
-     *
-     * @throws \OutOfBoundsException
-     * @param int $position
-     * @return void
-     */
-    public function seek($position)
-    {
-        $this->_position = $position;
-
-        if (!$this->valid()) {
-            throw new \OutOfBoundsException("invalid seek position ($position)");
-        }
-    }
-
-    /**
-     * ArrayAdapter constructor.
-     * @param array $data
-     */
-    public function __construct($data)
-    {
-        $this->_array = $data;
-        $this->_position = 0;
-        $colnames = array_keys($this->current() );
+    public function __construct(
+        array $data
+    ) {
+        $this->array = $data;
+        $colnames = array_keys($this->current());
         parent::__construct($colnames);
     }
 
     /**
-     * Rewind to starting position
+     * Go to given position and check if it is valid
      *
+     * @param int $position
      * @return void
+     * @throws \OutOfBoundsException
      */
-    public function rewind()
+    public function seek($position)
     {
-        $this->_position = 0;
+        $this->position = $position;
+
+        if (!$this->valid()) {
+            throw new \OutOfBoundsException("Invalid seek position ($position)");
+        }
+    }
+
+    /**
+     * Rewind to starting position
+     */
+    public function rewind(): void
+    {
+        $this->position = 0;
     }
 
     /**
      * Get data at current position
-     *
-     * @return mixed
      */
-    public function current()
+    public function current(): array
     {
-        return $this->_array[$this->_position];
+        return $this->array[$this->position];
     }
 
     /**
      * Get current position
-     *
-     * @return int
      */
-    public function key()
+    public function key(): int
     {
-        return $this->_position;
+        return $this->position;
     }
 
     /**
      * Set pointer to next position
-     *
-     * @return void
      */
-    public function next()
+    public function next(): void
     {
-        ++$this->_position;
+        ++$this->position;
     }
 
     /**
      * Is current position valid?
-     *
-     * @return bool
      */
-    public function valid()
+    public function valid(): bool
     {
-        return isset($this->_array[$this->_position]);
+        return isset($this->array[$this->position]);
     }
 
     /**
-     * Column names getter.
-     *
-     * @return array
+     * @return array|string[]
      */
-    public function getColNames()
+    public function getColNames(): array
     {
-        $colNames = array();
-        foreach ($this->_array as $row) {
+        $colNames = [];
+        foreach ($this->array as $row) {
             foreach (array_keys($row) as $key) {
                 if (!is_numeric($key) && !isset($colNames[$key])) {
                     $colNames[$key] = $key;
@@ -112,24 +93,31 @@ class ArrayAdapter extends \Magento\ImportExport\Model\Import\AbstractSource
         return $colNames;
     }
 
-    public function setValue($key, $value)
+    public function setValue(string $key, $value): void
     {
         if (!$this->valid()) {
             return;
         }
 
-        $this->_array[$this->_position][$key] = $value;
+        $this->array[$this->position][$key] = $value;
     }
 
-    public function unsetValue($key)
+    public function unsetValue(string $key): void
     {
         if (!$this->valid()) {
             return;
         }
 
-        unset($this->_array[$this->_position][$key]);
+        unset($this->array[$this->position][$key]);
     }
 
+    /**
+     * Render next row
+     *
+     * Return array or false on error
+     *
+     * @return array|false
+     */
     protected function _getNextRow()
     {
         $this->next();

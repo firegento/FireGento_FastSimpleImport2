@@ -4,8 +4,11 @@
  * @license https://opensource.org/licenses/GPL-3.0 GPL-3
  */
 
-namespace FireGento\FastSimpleImport\Model\Import\Proxy\Category;
+declare(strict_types=1);
 
-class ResourceModel extends \Magento\Catalog\Model\ResourceModel\Category
+namespace FireGento\FastSimpleImport\Exception;
+
+class ImportException extends \Exception
 {
+
 }

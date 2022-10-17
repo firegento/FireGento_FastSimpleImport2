@@ -1,4 +1,8 @@
 <?php
+/**
+ * @copyright © 2016 - 2022 FireGento e.V. - All rights reserved.
+ * @license https://opensource.org/licenses/GPL-3.0 GPL-3
+ */
 
 namespace FireGento\FastSimpleImport\ResourceModel;
 
@@ -15,18 +19,14 @@ use Magento\Framework\App\Config\ScopeConfigInterface;
  */
 class ImportData extends \Magento\ImportExport\Model\ResourceModel\Import\Data
 {
-    /**
-     * @var ScopeConfigInterface
-     */
-    private $scopeConfig;
+    private ScopeConfigInterface $scopeConfig;
 
     public function __construct(
         \Magento\Framework\Model\ResourceModel\Db\Context $context,
         \Magento\Framework\Json\Helper\Data $jsonHelper,
         ScopeConfigInterface $scopeConfig,
         $connectionName = null
-    )
-    {
+    ) {
         $this->scopeConfig = $scopeConfig;
         parent::__construct($context, $jsonHelper, $connectionName);
     }
@@ -44,5 +44,4 @@ class ImportData extends \Magento\ImportExport\Model\ResourceModel\Import\Data
             parent::_construct();
         }
     }
-
 }

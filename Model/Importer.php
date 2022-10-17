@@ -1,232 +1,240 @@
 <?php
 /**
- * Copyright © 2016 FireGento e.V. - All rights reserved.
- * See LICENSE.md bundled with this module for license details.
+ * @copyright © 2016 - 2022 FireGento e.V. - All rights reserved.
+ * @license https://opensource.org/licenses/GPL-3.0 GPL-3
  */
+
 namespace FireGento\FastSimpleImport\Model;
 
+use FireGento\FastSimpleImport\Exception\ImportException;
+use FireGento\FastSimpleImport\Exception\RuntimeException;
+use FireGento\FastSimpleImport\Exception\ValidationException;
+use FireGento\FastSimpleImport\Model\Adapters\ImportAdapterFactoryInterface;
+use FireGento\FastSimpleImport\Service\ImportErrorService as ImportErrorService;
 use Magento\ImportExport\Model\Import;
+use Magento\ImportExport\Model\Import\ErrorProcessing\ProcessingErrorAggregatorInterface;
+use Magento\ImportExport\Model\ImportFactory;
 
 class Importer
 {
-    /**
-     * @var \FireGento\FastSimpleImport\Helper\ImportError
-     */
-    protected $errorHelper;
-    /**
-     * @var
-     */
-    protected $errorMessages;
-    /**
-     * @var \FireGento\FastSimpleImport\Model\Adapters\ImportAdapterFactoryInterface
-     */
-    protected $importAdapterFactory;
-    /**
-     * @var
-     */
-    protected $validationResult;
-    /**
-     * @var \FireGento\FastSimpleImport\Helper\Config
-     */
-    protected $configHelper;
-    /**
-     * @var array
-     */
-    protected $settings;
-    /**
-     * @var string
-     */
-    protected $logTrace = "";
+    private ImportFactory                 $importModelFactory;
+    private ImportErrorService            $importErrorService;
+    private ImportAdapterFactoryInterface $importAdapterFactory;
+    private Config                        $config;
+    private ?bool                         $validationResult;
+    private ?array                        $settings;
+    private string                        $logTrace      = '';
+    private array                         $errorMessages = [];
+    private ?Import                       $importModel = null;
 
-    /**
-     * @var \Magento\ImportExport\Model\ImportFactory
-     */
-    private $importModelFactory;
-
-    /**
-     * Importer constructor.
-     * @param \Magento\ImportExport\Model\ImportFactory $importModelFactory
-     * @param \FireGento\FastSimpleImport\Helper\ImportError $errorHelper
-     * @param \FireGento\FastSimpleImport\Model\Adapters\ImportAdapterFactoryInterface $importAdapterFactory
-     * @param \FireGento\FastSimpleImport\Helper\Config $configHelper
-     */
     public function __construct(
-        \Magento\ImportExport\Model\ImportFactory $importModelFactory,
-        \FireGento\FastSimpleImport\Helper\ImportError $errorHelper,
-        \FireGento\FastSimpleImport\Model\Adapters\ImportAdapterFactoryInterface $importAdapterFactory,
-        \FireGento\FastSimpleImport\Helper\Config $configHelper
-    )
-    {
-
-        $this->errorHelper = $errorHelper;
+        ImportFactory $importModelFactory,
+        ImportErrorService $importErrorService,
+        ImportAdapterFactoryInterface $importAdapterFactory,
+        Config $config
+    ) {
+        $this->importErrorService = $importErrorService;
         $this->importAdapterFactory = $importAdapterFactory;
-        $this->configHelper = $configHelper;
+        $this->config = $config;
         $this->importModelFactory = $importModelFactory;
         $this->settings = [
-            'entity' => $this->configHelper->getEntity(),
-            'behavior' => $this->configHelper->getBehavior(),
-            'ignore_duplicates' => $this->configHelper->getIgnoreDuplicates(),
-            'validation_strategy' => $this->configHelper->getValidationStrategy(),
-            'allowed_error_count' => $this->configHelper->getAllowedErrorCount(),
-            'import_images_file_dir' => $this->configHelper->getImportFileDir(),
-            'category_path_seperator' => $this->configHelper->getCategoryPathSeperator(),
-            '_import_multiple_value_separator' =>  Import::DEFAULT_GLOBAL_MULTI_VALUE_SEPARATOR
+            'entity'                           => $this->config->getEntity(),
+            'behavior'                         => $this->config->getBehavior(),
+            'ignore_duplicates'                => $this->config->getIgnoreDuplicates(),
+            'validation_strategy'              => $this->config->getValidationStrategy(),
+            'allowed_error_count'              => $this->config->getAllowedErrorCount(),
+            '_import_multiple_value_separator' => Import::DEFAULT_GLOBAL_MULTI_VALUE_SEPARATOR,
         ];
     }
 
     /**
-     * Getter for default Delimiter
-     * @return mixed
+     * @throws ValidationException
+     * @throws ImportException
      */
+    public function processImport(array $dataArray): void
+    {
+        $this->validateData($dataArray);
+        $this->importData();
+    }
 
-    public function getMultipleValueSeparator()
+    /**
+     * @throws ValidationException
+     */
+    private function validateData(array $dataArray): void
+    {
+        $importModel = $this->getImportModel();
+        $source = $this->importAdapterFactory->create([
+            'data'                   => $dataArray,
+            'multipleValueSeparator' => $this->getMultipleValueSeparator(),
+        ]);
+        $this->validationResult = $importModel->validateSource($source);
+        $errorAggregator = $this->getErrorAggregator();
+        if ($errorAggregator->hasToBeTerminated()) {
+            throw new ValidationException(
+                $this->importErrorService->getImportErrorMessagesAsString($errorAggregator)
+            );
+        }
+    }
+
+    /**
+     * @throws ImportException
+     */
+    private function importData()
+    {
+        $importModel = $this->getImportModel();
+        $importModel->importSource();
+        $this->handleImportResult($importModel);
+    }
+
+    /**
+     * @throws ImportException
+     */
+    private function handleImportResult(Import $importModel)
+    {
+        $errorAggregator = $this->getErrorAggregator();
+        $this->errorMessages = $this->importErrorService->getImportErrorMessages($errorAggregator);
+        if (!$errorAggregator->hasToBeTerminated()) {
+            $importModel->invalidateIndex();
+        } else {
+            throw new ImportException(
+                $this->importErrorService->getImportErrorMessagesAsString($errorAggregator)
+            );
+        }
+    }
+
+    public function getImportModel(): Import
+    {
+        if ($this->importModel === null) {
+            $this->importModel = $this->importModelFactory->create();
+            $this->importModel->setData($this->settings);
+        }
+        return $this->importModel;
+    }
+
+    public function getErrorAggregator(): ProcessingErrorAggregatorInterface
+    {
+        return $this->getImportModel()->getErrorAggregator();
+    }
+
+    /**
+     * @throws RuntimeException
+     */
+    public function setEntityCode(string $entityCode): self
+    {
+        $this->assertImportModelNotInitialized();
+        $this->settings['entity'] = $entityCode;
+        return $this;
+    }
+
+    /**
+     * @throws RuntimeException
+     */
+    public function setBehavior(string $behavior): self
+    {
+        $this->assertImportModelNotInitialized();
+        $this->settings['behavior'] = $behavior;
+        return $this;
+    }
+
+    /**
+     * @throws RuntimeException
+     */
+    public function setIgnoreDuplicates(bool $value): self
+    {
+        $this->assertImportModelNotInitialized();
+        $this->settings['ignore_duplicates'] = $value;
+        return $this;
+    }
+
+    /**
+     * @throws RuntimeException
+     */
+    public function setValidationStrategy(string $strategy): self
+    {
+        $this->assertImportModelNotInitialized();
+        $this->settings['validation_strategy'] = $strategy;
+        return $this;
+    }
+
+    /**
+     * @throws RuntimeException
+     */
+    public function setValidationStrategySkipErrors(): self
+    {
+        return $this->setValidationStrategy(ProcessingErrorAggregatorInterface::VALIDATION_STRATEGY_SKIP_ERRORS);
+    }
+
+    /**
+     * @throws RuntimeException
+     */
+    public function setValidationStrategyStopOnErrors(): self
+    {
+        return $this->setValidationStrategy(ProcessingErrorAggregatorInterface::VALIDATION_STRATEGY_STOP_ON_ERROR);
+    }
+
+    /**
+     * @throws RuntimeException
+     */
+    public function setAllowedErrorCount(int $count): self
+    {
+        $this->assertImportModelNotInitialized();
+        $this->settings['allowed_error_count'] = $count;
+        return $this;
+    }
+
+    /**
+     * @throws RuntimeException
+     */
+    public function setMultipleValueSeparator(string $multipleValueSeparator): self
+    {
+        $this->assertImportModelNotInitialized();
+        $this->settings['_import_multiple_value_separator'] = $multipleValueSeparator;
+        return $this;
+    }
+
+    public function setImportAdapterFactory(ImportAdapterFactoryInterface $importAdapterFactory): self
+    {
+        $this->importAdapterFactory = $importAdapterFactory;
+        return $this;
+    }
+
+    public function getValidationResult(): bool
+    {
+        return $this->validationResult;
+    }
+
+    public function getLogTrace(): string
+    {
+        return $this->logTrace;
+    }
+
+    public function getErrorMessages(): array
+    {
+        return $this->errorMessages;
+    }
+
+    public function getMultipleValueSeparator(): string
     {
         return $this->settings['_import_multiple_value_separator'];
     }
 
-    /**
-     * Sets the default delimiter
-     * @param $multipleValueSeparator
-     */
-    public function setMultipleValueSeparator($multipleValueSeparator)
-    {
-        $this->settings['_import_multiple_value_separator'] = $multipleValueSeparator;
-    }
-
-    /**
-     * @return Adapters\ImportAdapterFactoryInterface
-     */
-    public function getImportAdapterFactory()
+    public function getImportAdapterFactory(): ImportAdapterFactoryInterface
     {
         return $this->importAdapterFactory;
     }
 
     /**
-     * @param Adapters\ImportAdapterFactoryInterface $importAdapterFactory
+     * @throws RuntimeException
      */
-    public function setImportAdapterFactory($importAdapterFactory)
+    private function assertImportModelNotInitialized(): void
     {
-        $this->importAdapterFactory = $importAdapterFactory;
-    }
-
-    public function processImport($dataArray)
-    {
-        $validation = $this->_validateData($dataArray);
-        if ($validation) {
-            $this->_importData();
-        }
-
-        return $validation;
-    }
-
-    protected function _validateData($dataArray)
-    {
-        $importModel = $this->createImportModel();
-        $source = $this->importAdapterFactory->create(
-            array(
-                'data' => $dataArray,
-                'multipleValueSeparator' => $this->getMultipleValueSeparator()
-            )
-        );
-        $this->validationResult = $importModel->validateSource($source);
-        $this->addToLogTrace($importModel);
-        return $this->validationResult;
-    }
-
-    /**
-     * @return \Magento\ImportExport\Model\Import
-     */
-    public function createImportModel()
-    {
-        $importModel = $this->importModelFactory->create();
-        $importModel->setData($this->settings);
-        return $importModel;
-    }
-
-    public function addToLogTrace($importModel)
-    {
-        $this->logTrace = $this->logTrace . $importModel->getFormatedLogTrace();
-    }
-
-    protected function _importData()
-    {
-        $importModel = $this->createImportModel();
-        $importModel->importSource();
-        $this->_handleImportResult($importModel);
-    }
-
-    protected function _handleImportResult($importModel)
-    {
-        $errorAggregator = $importModel->getErrorAggregator();
-        $this->errorMessages = $this->errorHelper->getImportErrorMessages($errorAggregator);
-        $this->addToLogTrace($importModel);
-        if (!$importModel->getErrorAggregator()->hasToBeTerminated()) {
-            $importModel->invalidateIndex();
+        if ($this->importModel !== null) {
+            throw new RuntimeException(
+                __(
+                    'Method %1 cannot be called after initializing the import model.',
+                    __METHOD__
+                )
+            );
         }
     }
-
-    /**
-     * @param string $entityCode
-     */
-    public function setEntityCode($entityCode)
-    {
-        $this->settings['entity'] = $entityCode;
-
-    }
-
-    /**
-     * @param string $behavior
-     */
-    public function setBehavior($behavior)
-    {
-        $this->settings['behavior'] = $behavior;
-    }
-
-    /**
-     * @param string $value
-     */
-    public function setIgnoreDuplicates($value)
-    {
-        $this->settings['ignore_duplicates'] = $value;
-    }
-
-    /**
-     * @param string $strategy
-     */
-    public function setValidationStrategy($strategy)
-    {
-        $this->settings['validation_strategy'] = $strategy;
-    }
-
-    /**
-     * @param int $count
-     */
-    public function setAllowedErrorCount($count)
-    {
-        $this->settings['allowed_error_count'] = $count;
-    }
-
-    /**
-     * @param string $dir
-     */
-    public function setImportImagesFileDir($dir)
-    {
-        $this->settings['import_images_file_dir'] = $dir;
-    }
-
-    public function getValidationResult()
-    {
-        return $this->validationResult;
-    }
-
-    public function getLogTrace()
-    {
-        return $this->logTrace;
-    }
-
-    public function getErrorMessages()
-    {
-        return $this->errorMessages;
-    }
-
 }
