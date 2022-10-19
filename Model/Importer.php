@@ -199,6 +199,17 @@ class Importer
         return $this;
     }
 
+    /**
+     * @throws RuntimeException
+     */
+    public function setCategoryPathSeparator(string $categoryPathSeparator): self
+    {
+        $this->assertImportModelNotInitialized();
+        $this->settings['category_path_seperator'] = $categoryPathSeparator;
+
+        return $this;
+    }
+
     public function getValidationResult(): bool
     {
         return $this->validationResult;

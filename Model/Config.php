@@ -17,8 +17,7 @@ class Config extends AbstractHelper
     private const XML_PATH_VALIDATION_STRATEGY     = 'fastsimpleimport/default/validation_strategy';
     private const XML_PATH_ALLOWED_ERROR_COUNT     = 'fastsimpleimport/default/allowed_error_count';
     private const XML_PATH_IMPORT_IMAGES_FILE_FIR  = 'fastsimpleimport/default/import_images_file_dir';
-
-    public const  XML_PATH_CATEGORY_PATH_SEPERATOR = 'fastsimpleimport/default/category_path_seperator';
+    private const XML_PATH_CATEGORY_PATH_SEPERATOR = 'fastsimpleimport/default/category_path_seperator';
 
     public function __construct(
         Context $context

@@ -216,6 +216,7 @@ class Category extends \Magento\ImportExport\Model\Import\AbstractEntity
     private CategoryUrlRewriteGenerator $categoryUrlRewriteGenerator;
     private UrlPersistInterface $urlPersist;
     private CategoryRepositoryInterface $categoryRepository;
+    private Config $config;
 
     public function __construct(
         StringUtils $string,
@@ -239,6 +240,7 @@ class Category extends \Magento\ImportExport\Model\Import\AbstractEntity
         CategoryUrlRewriteGenerator $categoryUrlRewriteGenerator,
         CategoryRepositoryInterface $categoryRepository,
         UrlPersistInterface $urlPersist,
+        Config $config,
         array $data = []
     ) {
         parent::__construct(
@@ -279,8 +281,9 @@ class Category extends \Magento\ImportExport\Model\Import\AbstractEntity
             ->initAttributes()
             ->initAttributeSetId();
 
-        $this->entityTable = $this->defaultCategory->getResource()->getEntityTable();
+        $this->entityTable                  = $this->defaultCategory->getResource()->getEntityTable();
         $this->categoryImportVersionFeature = $this->versionFeatures->create('CategoryImportVersion');
+        $this->config                       = $config;
     }
 
     /**
@@ -382,10 +385,7 @@ class Category extends \Magento\ImportExport\Model\Import\AbstractEntity
                     $this->categoriesWithRoots[$rootCategoryName] = [];
                 }
 
-                $index = $this->implodeEscaped(
-                    (string) $this->_scopeConfig->getValue(Config::XML_PATH_CATEGORY_PATH_SEPERATOR),
-                    $path
-                );
+                $index = $this->implodeEscaped($this->config->getCategoryPathSeparator(), $path);
                 $this->categoriesWithRoots[$rootCategoryName][$index] = [
                     'entity_id' => $category->getId(),
                     CategoryInterface::KEY_PATH => $category->getData(CategoryInterface::KEY_PATH),
@@ -417,10 +417,7 @@ class Category extends \Magento\ImportExport\Model\Import\AbstractEntity
         foreach ($array as $value) {
             $newArray[] = str_replace($glue, '\\' . $glue, $value);
         }
-        return implode(
-            $this->_scopeConfig->getValue(Config::XML_PATH_CATEGORY_PATH_SEPERATOR),
-            $newArray
-        );
+        return implode($this->config->getCategoryPathSeparator(), $newArray);
     }
 
     /**
@@ -861,10 +858,7 @@ class Category extends \Magento\ImportExport\Model\Import\AbstractEntity
             return $rowData[CategoryModel::KEY_NAME];
         }
 
-        $categoryParts = $this->explodeEscaped(
-            (string) $this->_scopeConfig->getValue(Config::XML_PATH_CATEGORY_PATH_SEPERATOR),
-            $rowData[self::COL_CATEGORY]
-        );
+        $categoryParts = $this->explodeEscaped($this->config->getCategoryPathSeparator(), $rowData[self::COL_CATEGORY]);
         return end($categoryParts);
     }
 
@@ -911,15 +905,10 @@ class Category extends \Magento\ImportExport\Model\Import\AbstractEntity
             );
             $parent = $categoryParts[count($categoryParts) - 2];
         } else {
-            $categoryParts = $this->explodeEscaped(
-                (string) $this->_scopeConfig->getValue(Config::XML_PATH_CATEGORY_PATH_SEPERATOR),
-                $rowData[self::COL_CATEGORY]
-            );
+            $categoryParts = $this->explodeEscaped($this->config->getCategoryPathSeparator(),
+                $rowData[self::COL_CATEGORY]);
             array_pop($categoryParts);
-            $parent = $this->implodeEscaped(
-                (string) $this->_scopeConfig->getValue(Config::XML_PATH_CATEGORY_PATH_SEPERATOR),
-                $categoryParts
-            );
+            $parent = $this->implodeEscaped($this->config->getCategoryPathSeparator(), $categoryParts);
         }
 
         if ($parent) {
