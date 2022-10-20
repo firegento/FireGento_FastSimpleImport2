@@ -43,7 +43,6 @@ class Importer
             'ignore_duplicates'                => $this->config->getIgnoreDuplicates(),
             'validation_strategy'              => $this->config->getValidationStrategy(),
             'allowed_error_count'              => $this->config->getAllowedErrorCount(),
-            'category_path_seperator'          => $this->config->getCategoryPathSeperator(),
             '_import_multiple_value_separator' => Import::DEFAULT_GLOBAL_MULTI_VALUE_SEPARATOR,
         ];
     }
