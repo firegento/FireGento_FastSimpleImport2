@@ -337,12 +337,10 @@ class Category extends \Magento\ImportExport\Model\Import\AbstractEntity
         if ($attribute->usesSource()) {
             // should attribute has index (option value) instead of a label?
             $index = 'label';
-            if (
-                in_array($attribute->getAttributeCode(), $this->indexValueAttributes) ||
-                $attribute->getSourceModel() == Boolean::class
-            ) {
+            if (in_array($attribute->getAttributeCode(), $this->indexValueAttributes, true)
+                || $attribute->getSourceModel() === Boolean::class) {
                 $index = 'value';
-            };
+            }
 
             // only default (admin) store values used
             /** @var Attribute $attribute */
