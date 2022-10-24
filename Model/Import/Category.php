@@ -274,6 +274,8 @@ class Category extends \Magento\ImportExport\Model\Import\AbstractEntity
             $this->getErrorAggregator()->addErrorMessageTemplate($errorCode, $message);
         }
 
+        $this->config                       = $config;
+
         $this->initOnTapAttributes()
             ->initWebsites()
             ->initStores()
@@ -283,7 +285,6 @@ class Category extends \Magento\ImportExport\Model\Import\AbstractEntity
 
         $this->entityTable                  = $this->defaultCategory->getResource()->getEntityTable();
         $this->categoryImportVersionFeature = $this->versionFeatures->create('CategoryImportVersion');
-        $this->config                       = $config;
     }
 
     /**
