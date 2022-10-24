@@ -41,6 +41,7 @@ use Magento\CatalogImportExport\Model\Import\UploaderFactory;
 use Magento\Framework\Filesystem;
 use Magento\UrlRewrite\Model\UrlPersistInterface;
 use Magento\Catalog\Api\CategoryRepositoryInterface;
+use Magento\Eav\Model\Entity\Attribute\Source\Boolean;
 
 /**
  * Entity Adapter for importing Magento Categories
@@ -274,6 +275,8 @@ class Category extends \Magento\ImportExport\Model\Import\AbstractEntity
             $this->getErrorAggregator()->addErrorMessageTemplate($errorCode, $message);
         }
 
+        $this->config                       = $config;
+
         $this->initOnTapAttributes()
             ->initWebsites()
             ->initStores()
@@ -283,7 +286,6 @@ class Category extends \Magento\ImportExport\Model\Import\AbstractEntity
 
         $this->entityTable                  = $this->defaultCategory->getResource()->getEntityTable();
         $this->categoryImportVersionFeature = $this->versionFeatures->create('CategoryImportVersion');
-        $this->config                       = $config;
     }
 
     /**
@@ -335,7 +337,13 @@ class Category extends \Magento\ImportExport\Model\Import\AbstractEntity
 
         if ($attribute->usesSource()) {
             // should attribute has index (option value) instead of a label?
-            $index = in_array($attribute->getAttributeCode(), $this->indexValueAttributes) ? 'value' : 'label';
+            $index = 'label';
+            if (
+                in_array($attribute->getAttributeCode(), $this->indexValueAttributes) ||
+                $attribute->getSourceModel() == Boolean::class
+            ) {
+                $index = 'value';
+            };
 
             // only default (admin) store values used
             /** @var Attribute $attribute */
@@ -954,13 +962,13 @@ class Category extends \Magento\ImportExport\Model\Import\AbstractEntity
 
                     $time = !empty($rowData[CategoryModel::KEY_CREATED_AT])
                         ? strtotime($rowData[CategoryModel::KEY_CREATED_AT])
-                        : null;
+                        : 'now';
 
                     // entity table data
                     $entityRow = [
                         CategoryInterface::KEY_PARENT_ID => $parentCategory['entity_id'],
                         CategoryInterface::KEY_LEVEL => $parentCategory[CategoryInterface::KEY_LEVEL] + 1,
-                        CategoryInterface::KEY_CREATED_AT => (new DateTime($time))
+                        CategoryInterface::KEY_CREATED_AT => (new \DateTime($time))
                             ->format(DateTime::DATETIME_PHP_FORMAT),
                         CategoryInterface::KEY_UPDATED_AT => "now()",
                         CategoryInterface::KEY_POSITION => $rowData[CategoryInterface::KEY_POSITION]
