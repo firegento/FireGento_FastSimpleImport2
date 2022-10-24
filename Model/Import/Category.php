@@ -117,6 +117,9 @@ class Category extends \Magento\ImportExport\Model\Import\AbstractEntity
      */
     private ?string $entityTable = null;
 
+    /**
+     * Attributes with index (not label) value.
+     */
     private array $indexValueAttributes = [
         'default_sort_by',
         CategoryInterface::KEY_AVAILABLE_SORT_BY,
