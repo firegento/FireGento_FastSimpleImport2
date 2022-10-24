@@ -41,6 +41,7 @@ use Magento\CatalogImportExport\Model\Import\UploaderFactory;
 use Magento\Framework\Filesystem;
 use Magento\UrlRewrite\Model\UrlPersistInterface;
 use Magento\Catalog\Api\CategoryRepositoryInterface;
+use Magento\Eav\Model\Entity\Attribute\Source\Boolean;
 
 /**
  * Entity Adapter for importing Magento Categories
@@ -339,7 +340,7 @@ class Category extends \Magento\ImportExport\Model\Import\AbstractEntity
             $index = 'label';
             if (
                 in_array($attribute->getAttributeCode(), $this->indexValueAttributes) ||
-                $attribute->getSourceModel() == "Magento\Eav\Model\Entity\Attribute\Source\Boolean"
+                $attribute->getSourceModel() == Boolean::class
             ) {
                 $index = 'value';
             };
