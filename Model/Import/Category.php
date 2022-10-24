@@ -7,41 +7,40 @@
 namespace FireGento\FastSimpleImport\Model\Import;
 
 use FireGento\FastSimpleImport\Model\Config;
+use FireGento\FastSimpleImport\Model\Enterprise\CategoryImportVersion;
 use FireGento\FastSimpleImport\Model\Enterprise\VersionFeaturesFactory;
 use FireGento\FastSimpleImport\Model\Import\Proxy\Category\ResourceModelFactory as CategoryResourceModelFactory;
-use FireGento\FastSimpleImport\Model\Enterprise\CategoryImportVersion;
-
+use Magento\Catalog\Api\CategoryRepositoryInterface;
 use Magento\Catalog\Api\Data\CategoryInterface;
-use Magento\Catalog\Model\ResourceModel\Category\Collection as CategoryCollection;
-use Magento\CatalogImportExport\Model\Import\Uploader;
-use Magento\CatalogUrlRewrite\Model\CategoryUrlRewriteGenerator;
-use Magento\Eav\Model\Entity\Attribute;
-use Magento\Eav\Model\Entity\Attribute\AbstractAttribute;
-use Magento\Framework\DB\Adapter\AdapterInterface;
-use Magento\Framework\Filesystem\Directory\WriteInterface as DirectoryWriteInterface;
-use Magento\ImportExport\Model\Import;
-use Magento\ImportExport\Model\Import\ErrorProcessing\ProcessingErrorAggregatorInterface;
-use Magento\Framework\App\Filesystem\DirectoryList;
-use Magento\Framework\Model\ResourceModel\Db\TransactionManagerInterface;
-use Magento\Framework\Model\ResourceModel\Db\ObjectRelationProcessor;
-use Magento\Framework\Exception\LocalizedException;
-use Magento\Framework\Stdlib\DateTime;
-use Magento\Framework\Stdlib\StringUtils;
 use Magento\Catalog\Model\Category as CategoryModel;
 use Magento\Catalog\Model\ResourceModel\Category\Attribute\Collection as CategoryAttributeCollection;
+use Magento\Catalog\Model\ResourceModel\Category\Collection as CategoryCollection;
 use Magento\Catalog\Model\ResourceModel\Category\CollectionFactory as CategoryCollectionFactory;
+use Magento\CatalogImportExport\Model\Import\Uploader;
+use Magento\CatalogImportExport\Model\Import\UploaderFactory;
+use Magento\CatalogUrlRewrite\Model\CategoryUrlRewriteGenerator;
+use Magento\Eav\Model\Config as EavConfig;
+use Magento\Eav\Model\Entity\Attribute;
+use Magento\Eav\Model\Entity\Attribute\AbstractAttribute;
+use Magento\Eav\Model\Entity\Attribute\Source\Boolean;
 use Magento\Framework\App\Config\ScopeConfigInterface;
+use Magento\Framework\App\Filesystem\DirectoryList;
+use Magento\Framework\App\ResourceConnection;
+use Magento\Framework\DB\Adapter\AdapterInterface;
+use Magento\Framework\Event\ManagerInterface;
+use Magento\Framework\Exception\LocalizedException;
+use Magento\Framework\Filesystem;
+use Magento\Framework\Filesystem\Directory\WriteInterface as DirectoryWriteInterface;
+use Magento\Framework\Model\ResourceModel\Db\ObjectRelationProcessor;
+use Magento\Framework\Model\ResourceModel\Db\TransactionManagerInterface;
+use Magento\Framework\Stdlib\DateTime;
+use Magento\Framework\Stdlib\StringUtils;
+use Magento\ImportExport\Model\Import;
+use Magento\ImportExport\Model\Import\ErrorProcessing\ProcessingErrorAggregatorInterface;
 use Magento\ImportExport\Model\ImportFactory;
 use Magento\ImportExport\Model\ResourceModel\Helper as ImportExportHelper;
-use Magento\Framework\App\ResourceConnection;
 use Magento\Store\Model\StoreManagerInterface;
-use Magento\Eav\Model\Config as EavConfig;
-use Magento\Framework\Event\ManagerInterface;
-use Magento\CatalogImportExport\Model\Import\UploaderFactory;
-use Magento\Framework\Filesystem;
 use Magento\UrlRewrite\Model\UrlPersistInterface;
-use Magento\Catalog\Api\CategoryRepositoryInterface;
-use Magento\Eav\Model\Entity\Attribute\Source\Boolean;
 
 /**
  * Entity Adapter for importing Magento Categories
