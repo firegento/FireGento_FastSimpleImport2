@@ -81,6 +81,7 @@ class Importer
      */
     private function importData()
     {
+        $this->resetImportModel();
         $importModel = $this->getImportModel();
         $importModel->importSource();
         $this->handleImportResult($importModel);
@@ -109,6 +110,11 @@ class Importer
             $this->importModel->setData($this->settings);
         }
         return $this->importModel;
+    }
+
+    public function resetImportModel(): void
+    {
+        $this->importModel = null;
     }
 
     public function getErrorAggregator(): ProcessingErrorAggregatorInterface
