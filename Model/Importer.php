@@ -53,6 +53,7 @@ class Importer
      */
     public function processImport(array $dataArray): void
     {
+        $this->resetImportModel();
         $this->validateData($dataArray);
         $this->importData();
     }
@@ -109,6 +110,11 @@ class Importer
             $this->importModel->setData($this->settings);
         }
         return $this->importModel;
+    }
+
+    private function resetImportModel(): void
+    {
+        $this->importModel = null;
     }
 
     public function getErrorAggregator(): ProcessingErrorAggregatorInterface
