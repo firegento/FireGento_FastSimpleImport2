@@ -1035,7 +1035,8 @@ class Category extends \Magento\ImportExport\Model\Import\AbstractEntity
                             if (isset($attrParams['options'][strtolower($attrValue)])) {
                                 $attrValue = $attrParams['options'][strtolower($attrValue)];
                             }
-                        } elseif ('datetime' == $attribute->getBackendType() && strtotime($attrValue)) {
+                        } elseif ('datetime' == $attribute->getBackendType() && is_string($attrValue)
+                            && strtotime($attrValue)) {
                             $attrValue = (new \DateTime($attrValue))->format(DateTime::DATETIME_PHP_FORMAT);
                         } elseif ($backModel && 'available_sort_by' != $attrCode) {
                             $attribute->getBackend()->beforeSave($category);
