@@ -55,6 +55,7 @@ class Importer
     {
         $this->resetImportModel();
         $this->validateData($dataArray);
+        $this->resetImportModel();
         $this->importData();
     }
 
