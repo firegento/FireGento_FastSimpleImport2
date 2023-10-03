@@ -35,11 +35,11 @@ class ImportData extends \Magento\ImportExport\Model\ResourceModel\Import\Data
     {
         if ($this->scopeConfig->isSetFlag('fastsimpleimport/database/import_temp_table')) {
             $this->getConnection()->createTemporaryTableLike(
-                'importexport_importdata_tmp',
-                'importexport_importdata',
+                $this->_resources->getTableName('importexport_importdata_tmp'),
+                $this->_resources->getTableName('importexport_importdata'),
                 true
             );
-            $this->_init('importexport_importdata_tmp', 'id');
+            $this->_init($this->_resources->getTableName('importexport_importdata_tmp'), 'id');
         } else {
             parent::_construct();
         }
