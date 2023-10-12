@@ -13,19 +13,19 @@
             <resource>FireGento_FastSimpleImport::config_fastsimpleimport</resource>
             <group id="default" translate="label" type="text" sortOrder="1" showInDefault="1" showInWebsite="0" showInStore="0">
                 <label>Default Values</label>
-                <field id="behavior" translate="label" type="select" sortOrder="10" showInDefault="1" showInWebsite="0" showInStore="0">
+                <field id="behavior" translate="label" type="select" sortOrder="10" showInDefault="1" showInWebsite="0" showInStore="0" canRestore="1">
                     <label>Behavior</label>
                     <source_model>FireGento\FastSimpleImport\Model\Config\Source\Behavior</source_model>
                 </field>
-                <field id="entity" translate="label" type="select" sortOrder="20" showInDefault="1" showInWebsite="0" showInStore="0">
+                <field id="entity" translate="label" type="select" sortOrder="20" showInDefault="1" showInWebsite="0" showInStore="0" canRestore="1">
                     <label>Entity Type</label>
                     <source_model>Magento\ImportExport\Model\Source\Import\Entity</source_model>
                 </field>
-                <field id="validation_strategy" translate="label" type="select" sortOrder="30" showInDefault="1" showInWebsite="0" showInStore="0">
+                <field id="validation_strategy" translate="label" type="select" sortOrder="30" showInDefault="1" showInWebsite="0" showInStore="0" canRestore="1">
                     <label>Validation Strategy</label>
                     <source_model>FireGento\FastSimpleImport\Model\Config\Source\ValidationStrategy</source_model>
                 </field>
-                <field id="allowed_error_count" translate="label comment" type="text" sortOrder="40" showInDefault="1" showInWebsite="0" showInStore="0">
+                <field id="allowed_error_count" translate="label comment" type="text" sortOrder="40" showInDefault="1" showInWebsite="0" showInStore="0" canRestore="1">
                     <label>Allowed Error Count</label>
                     <comment>Only non-fatal errors - import will always stop if any fatal errors occur.</comment>
                     <frontend_class>validate-number</frontend_class>
@@ -33,17 +33,17 @@
                         <field id="validation_strategy">validation-stop-on-errors</field>
                     </depends>
                 </field>
-                <field id="ignore_duplicates" translate="label" type="select" sortOrder="60" showInDefault="1" showInWebsite="0" showInStore="0">
+                <field id="ignore_duplicates" translate="label" type="select" sortOrder="60" showInDefault="1" showInWebsite="0" showInStore="0" canRestore="1">
                     <label>Ignore duplicates</label>
                     <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
                 </field>
-                <field id="category_path_seperator" translate="label" type="text" sortOrder="70" showInDefault="1" showInWebsite="0" showInStore="0">
+                <field id="category_path_seperator" translate="label" type="text" sortOrder="70" showInDefault="1" showInWebsite="0" showInStore="0" canRestore="1">
                     <label>Category path seperator</label>
                 </field>
             </group>
             <group id="database" translate="label" sortOrder="2" showInDefault="1" showInWebsite="0" showInStore="0">
                 <label>Database settings</label>
-                <field id="import_temp_table" type="select" sortOrder="10" showInDefault="1" translate="label,comment">
+                <field id="import_temp_table" type="select" sortOrder="10" showInDefault="1" translate="label,comment" canRestore="1">
                     <label>Create temporary table for validated import_data</label>
                     <comment>This will create a temporary table instead of using the regular table. It allows parallel execution of imports without data loss. But it will not be possible anymore to upload CSV import files in the admin panel.</comment>
                     <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
