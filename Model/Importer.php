@@ -156,6 +156,16 @@ class Importer
     /**
      * @throws RuntimeException
      */
+    public function setImportLocale(?string $locale): self
+    {
+        $this->assertImportModelNotInitialized();
+        $this->settings['locale'] = $locale;
+        return $this;
+    }
+
+    /**
+     * @throws RuntimeException
+     */
     public function setValidationStrategy(string $strategy): self
     {
         $this->assertImportModelNotInitialized();
