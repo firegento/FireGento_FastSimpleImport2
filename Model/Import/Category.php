@@ -662,7 +662,7 @@ class Category extends \Magento\ImportExport\Model\Import\AbstractEntity
      */
     public function setIgnoreDuplicates($value): self
     {
-        $this->_parameters['ignore_duplicates'] = (boolean)$value;
+        $this->_parameters['ignore_duplicates'] = (bool)$value;
         return $this;
     }
 
