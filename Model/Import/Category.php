@@ -1113,7 +1113,7 @@ class Category extends \Magento\ImportExport\Model\Import\AbstractEntity
     {
         try {
             $res = $this->getUploader()->move($fileName);
-            return $res['file'];
+            return '/media/catalog/category' . $res['file'];
         } catch (\Exception $e) {
             return '';
         }
