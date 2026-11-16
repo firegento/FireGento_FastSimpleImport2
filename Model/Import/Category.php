@@ -172,6 +172,17 @@ class Category extends \Magento\ImportExport\Model\Import\AbstractEntity
         self::COL_CATEGORY
     ];
 
+    /**
+     * List of fields that can used config values in case when value does not defined directly
+     *
+     * @var array
+     */
+    protected $useConfigFields = [
+        'available_sort_by',
+        'default_sort_by',
+        'filter_price_range'
+    ];
+
     private ?int $errorsLimit = null;
     private array $invalidRows = [];
 
@@ -816,7 +827,8 @@ class Category extends \Magento\ImportExport\Model\Import\AbstractEntity
             foreach ($this->attributes as $attrCode => $attrParams) {
                 if (isset($rowData[$attrCode]) && strlen($rowData[$attrCode])) {
                     $this->isAttributeValid($attrCode, $attrParams, $rowData, $rowNum);
-                } elseif ($attrParams['is_required'] && !isset($this->categoriesWithRoots[$root][$category])) {
+                } elseif ($attrParams['is_required'] && !isset($this->categoriesWithRoots[$root][$category])
+                    && !in_array($attrCode, $this->useConfigFields)) {
                     $this->addRowError(self::ERROR_VALUE_IS_REQUIRED, $rowNum, $attrCode);
                 }
             }
