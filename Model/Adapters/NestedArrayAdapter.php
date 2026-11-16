@@ -38,6 +38,9 @@ class NestedArrayAdapter extends ArrayAdapter
                     $implodeStr = '|';
                     return $value;
                 }
+                if (is_int($key)) {
+                    return $value;
+                }
                 return sprintf("%s=%s", $key, $value);
             },
             $line,
