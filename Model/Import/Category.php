@@ -9,17 +9,16 @@ namespace FireGento\FastSimpleImport\Model\Import;
 use FireGento\FastSimpleImport\Model\Config;
 use FireGento\FastSimpleImport\Model\Enterprise\CategoryImportVersion;
 use FireGento\FastSimpleImport\Model\Enterprise\VersionFeaturesFactory;
-use FireGento\FastSimpleImport\Model\Import\Proxy\Category\ResourceModelFactory as CategoryResourceModelFactory;
 use Magento\Catalog\Api\CategoryRepositoryInterface;
 use Magento\Catalog\Api\Data\CategoryInterface;
 use Magento\Catalog\Model\Category as CategoryModel;
 use Magento\Catalog\Model\ResourceModel\Category\Attribute\Collection as CategoryAttributeCollection;
 use Magento\Catalog\Model\ResourceModel\Category\Collection as CategoryCollection;
 use Magento\Catalog\Model\ResourceModel\Category\CollectionFactory as CategoryCollectionFactory;
+use Magento\Catalog\Model\ResourceModel\CategoryFactory as CategoryResourceModelFactory;
 use Magento\CatalogImportExport\Model\Import\Uploader;
 use Magento\CatalogImportExport\Model\Import\UploaderFactory;
 use Magento\CatalogUrlRewrite\Model\CategoryUrlRewriteGenerator;
-use Magento\Eav\Model\Config as EavConfig;
 use Magento\Eav\Model\Entity\Attribute;
 use Magento\Eav\Model\Entity\Attribute\AbstractAttribute;
 use Magento\Eav\Model\Entity\Attribute\Source\Boolean;
@@ -33,6 +32,7 @@ use Magento\Framework\Filesystem;
 use Magento\Framework\Filesystem\Directory\WriteInterface as DirectoryWriteInterface;
 use Magento\Framework\Model\ResourceModel\Db\ObjectRelationProcessor;
 use Magento\Framework\Model\ResourceModel\Db\TransactionManagerInterface;
+use Magento\Framework\Serialize\Serializer\Serialize;
 use Magento\Framework\Stdlib\DateTime;
 use Magento\Framework\Stdlib\StringUtils;
 use Magento\ImportExport\Model\Import;
@@ -217,6 +217,7 @@ class Category extends \Magento\ImportExport\Model\Import\AbstractEntity
     private UrlPersistInterface $urlPersist;
     private CategoryRepositoryInterface $categoryRepository;
     private Config $config;
+    private Serialize $serializer;
 
     public function __construct(
         StringUtils $string,
@@ -229,7 +230,6 @@ class Category extends \Magento\ImportExport\Model\Import\AbstractEntity
         CategoryModel $defaultCategory,
         CategoryAttributeCollection $attributeCollection,
         CategoryCollectionFactory $categoryCollectionFactory,
-        EavConfig $eavConfig,
         ManagerInterface $eventManager,
         UploaderFactory $imageUploaderFactory,
         Filesystem $filesystem,
@@ -241,6 +241,7 @@ class Category extends \Magento\ImportExport\Model\Import\AbstractEntity
         CategoryRepositoryInterface $categoryRepository,
         UrlPersistInterface $urlPersist,
         Config $config,
+        Serialize $serializer,
         array $data = []
     ) {
         parent::__construct(
@@ -267,6 +268,7 @@ class Category extends \Magento\ImportExport\Model\Import\AbstractEntity
         $this->categoryUrlRewriteGenerator = $categoryUrlRewriteGenerator;
         $this->urlPersist = $urlPersist;
         $this->categoryRepository = $categoryRepository;
+        $this->serializer = $serializer;
 
         $this->mediaDirectory = $filesystem->getDirectoryWrite(DirectoryList::ROOT);
 
@@ -283,7 +285,7 @@ class Category extends \Magento\ImportExport\Model\Import\AbstractEntity
             ->initAttributes()
             ->initAttributeSetId();
 
-        $this->entityTable                  = $this->defaultCategory->getResource()->getEntityTable();
+        $this->entityTable                  = $this->resourceFactory->create()->getEntityTable();
         $this->categoryImportVersionFeature = $this->versionFeatures->create('CategoryImportVersion');
     }
 
@@ -317,7 +319,9 @@ class Category extends \Magento\ImportExport\Model\Import\AbstractEntity
                 'id' => $attribute->getId(),
                 'is_required' => $attribute->getIsRequired(),
                 'is_static' => $attribute->isStatic(),
-                'rules' => $attribute->getValidateRules() ? unserialize($attribute->getValidateRules()) : null,
+                'rules' => $attribute->getValidateRules()
+                    ? $this->unserializeValidationRules($attribute->getValidateRules())
+                    : null,
                 'type' => Import::getAttributeType($attribute),
                 'options' => $this->getAttributeOptions($attribute),
                 'attribute' => $attribute
@@ -325,6 +329,21 @@ class Category extends \Magento\ImportExport\Model\Import\AbstractEntity
         }
 
         return $this;
+    }
+
+    /**
+     * Decode validation rules, returning false for malformed serialized data.
+     *
+     * @param string $rules
+     * @return mixed
+     */
+    private function unserializeValidationRules(string $rules)
+    {
+        try {
+            return $this->serializer->unserialize($rules);
+        } catch (\InvalidArgumentException $e) {
+            return false;
+        }
     }
 
     /**
@@ -595,7 +614,7 @@ class Category extends \Magento\ImportExport\Model\Import\AbstractEntity
             case Import::BEHAVIOR_REPLACE:
             case Import::BEHAVIOR_APPEND:
             case Import::BEHAVIOR_ADD_UPDATE:
-                $this->reindexUpdatedCategories();
+                $this->reindexAllCategories();
                 break;
             default:
                 throw new \Exception('Unsupported Mode!');
@@ -610,11 +629,24 @@ class Category extends \Magento\ImportExport\Model\Import\AbstractEntity
      */
     private function indexDeleteEvents(): self
     {
-        return $this->reindexUpdatedCategories();
+        return $this->reindexAllCategories();
     }
 
     /**
-     * Reindex all categories
+     * Reindex all existing categories.
+     */
+    private function reindexAllCategories(): self
+    {
+        foreach ($this->getCollection()->getAllIds() as $entityId) {
+            $this->reindexUpdatedCategories($entityId);
+        }
+        return $this;
+    }
+
+    /**
+     * Reindex one category.
+     *
+     * @param int|string $categoryId
      * @return $this
      * @throws \Exception
      */
