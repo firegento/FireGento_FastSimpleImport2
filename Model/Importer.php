@@ -53,6 +53,7 @@ class Importer
      */
     public function processImport(array $dataArray): void
     {
+        $this->logTrace = '';
         $this->resetImportModel();
         $this->validateData($dataArray);
         $this->resetImportModel();
@@ -70,6 +71,7 @@ class Importer
             'multipleValueSeparator' => $this->getMultipleValueSeparator(),
         ]);
         $this->validationResult = $importModel->validateSource($source);
+        $this->logTrace .= $importModel->getFormatedLogTrace();
         $errorAggregator = $this->getErrorAggregator();
         if ($errorAggregator->hasToBeTerminated()) {
             throw new ValidationException(
@@ -84,7 +86,11 @@ class Importer
     private function importData()
     {
         $importModel = $this->getImportModel();
-        $importModel->importSource();
+        try {
+            $importModel->importSource();
+        } finally {
+            $this->logTrace .= $importModel->getFormatedLogTrace();
+        }
         $this->handleImportResult($importModel);
     }
 
